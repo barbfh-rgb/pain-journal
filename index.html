@@ -520,7 +520,7 @@ function renderHistory() {
     if (e.mood && MOODS[e.mood]) pills.push(MOODS[e.mood].emoji + ' ' + MOODS[e.mood].label);
     if (e.energy != null) pills.push('⚡ ' + e.energy + '/10');
     if (e.sleepQuality) pills.push('💤 ' + SLEEP_LABELS[e.sleepQuality]);
-    return '<div class="history-entry" onclick="showDetail('' + k + '')">' +
+    return '<div class="history-entry" onclick="showDetail(\'' + k + '\')">' +
       '<div class="history-date">' + formatDate(k) + '</div>' +
       '<div class="history-summary">' +
       (pills.length ? pills.map(p => '<span class="history-pill">' + p + '</span>').join('') : '<span style="color:#3a3448;font-size:11px">No data recorded</span>') +
