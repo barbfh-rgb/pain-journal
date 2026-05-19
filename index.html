@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Pain Journal — BFH</title>
+<link rel="manifest" href="/pain-manifest.json">
+<meta name="theme-color" content="#0d0d0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pain Journal">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d0d0f;
+  color: #e8e0d0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #1e1e24;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+
+.header-logo {
+  height: 42px; width: auto;
+  filter: drop-shadow(0 0 6px rgba(212,175,55,0.9)) drop-shadow(0 0 14px rgba(212,175,55,0.5)) drop-shadow(0 0 28px rgba(212,175,55,0.25));
+}
+
+h1 { font-size: 18px; font-weight: 600; color: #e8e0d0; letter-spacing: 0.5px; }
+
+#today-date { font-size: 12px; color: #6b6478; text-align: right; line-height: 1.4; }
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #1e1e24;
+  background: #0d0d0f;
+  position: sticky; top: 0; z-index: 10;
+}
+
+.tab-btn {
+  flex: 1; padding: 12px 0;
+  background: none; border: none;
+  color: #6b6478; font-size: 13px; font-weight: 500; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tab-btn.active { color: #D4AF37; border-bottom-color: #D4AF37; }
+
+.panel { display: none; padding: 20px 16px 100px; }
+.panel.active { display: block; }
+
+.section { margin-bottom: 24px; }
+
+.section-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: #D4AF37; margin-bottom: 10px;
+}
+
+.input-label { font-size: 12px; color: #6b6478; margin-bottom: 6px; display: block; }
+
+/* Pain picker */
+.pain-picker { display: flex; gap: 4px; }
+
+.pain-btn {
+  flex: 1; aspect-ratio: 1;
+  border: 1px solid #2a2830; border-radius: 6px;
+  background: #13121a; color: #6b6478;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; padding: 0;
+}
+.pain-btn[data-level="1"].selected  { background:#1a4a1a; color:#4ade80; border-color:#4ade80; }
+.pain-btn[data-level="2"].selected  { background:#254a15; color:#86efac; border-color:#86efac; }
+.pain-btn[data-level="3"].selected  { background:#3a4a10; color:#bef264; border-color:#bef264; }
+.pain-btn[data-level="4"].selected  { background:#4a4a10; color:#fde047; border-color:#fde047; }
+.pain-btn[data-level="5"].selected  { background:#4a3a10; color:#fbbf24; border-color:#fbbf24; }
+.pain-btn[data-level="6"].selected  { background:#4a2a10; color:#f97316; border-color:#f97316; }
+.pain-btn[data-level="7"].selected  { background:#4a1a10; color:#ef4444; border-color:#ef4444; }
+.pain-btn[data-level="8"].selected  { background:#3a1010; color:#dc2626; border-color:#dc2626; }
+.pain-btn[data-level="9"].selected  { background:#2a0a0a; color:#b91c1c; border-color:#b91c1c; }
+.pain-btn[data-level="10"].selected { background:#1a0505; color:#991b1b; border-color:#991b1b; }
+
+.pain-label {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #4a4458; margin-top: 4px;
+}
+
+/* Mood */
+.mood-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mood-btn {
+  flex: 1; min-width: calc(33% - 8px);
+  padding: 8px 4px;
+  border: 1px solid #2a2830; border-radius: 10px;
+  background: #13121a; color: #e8e0d0;
+  font-size: 12px; cursor: pointer; text-align: center;
+  transition: all 0.15s;
+}
+.mood-btn .mood-emoji { font-size: 20px; display: block; margin-bottom: 2px; }
+.mood-btn.selected { border-color: #D4AF37; background: #1e1a10; }
+
+/* Sleep quality */
+.star-btn { font-size: 22px; background: none; border: none; cursor: pointer; opacity: 0.25; transition: opacity 0.15s; padding: 2px; }
+.star-btn.active { opacity: 1; }
+
+/* Spoons */
+.spoons-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.spoon-box {
+  flex: 1; aspect-ratio: 1;
+  border: 1px solid #2a2830; border-radius: 4px;
+  background: #13121a; cursor: pointer; transition: all 0.15s;
+  max-width: 36px;
+}
+.spoon-box.used { background: #D4AF37; border-color: #D4AF37; }
+.spoons-label { font-size: 12px; color: #6b6478; }
+
+/* Inputs */
+textarea, .short-input {
+  width: 100%;
+  background: #13121a;
+  border: 1px solid #2a2830;
+  border-radius: 10px;
+  color: #e8e0d0;
+  font-size: 14px;
+  font-family: inherit;
+  padding: 12px;
+  transition: border-color 0.2s;
+}
+textarea { resize: none; min-height: 70px; line-height: 1.5; }
+.short-input { padding: 10px 12px; }
+textarea:focus, .short-input:focus { outline: none; border-color: #D4AF37; }
+textarea::placeholder, .short-input::placeholder { color: #3a3448; }
+
+.divider { height: 1px; background: #1a1a24; margin: 4px 0 20px; }
+
+/* Save indicator */
+.save-indicator {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a1a24; border: 1px solid #D4AF37; color: #D4AF37;
+  padding: 8px 20px; border-radius: 20px; font-size: 13px;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+}
+.save-indicator.show { opacity: 1; }
+
+/* History */
+.history-entry {
+  background: #13121a; border: 1px solid #1e1e24;
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+  cursor: pointer; transition: border-color 0.2s;
+}
+.history-entry:active { border-color: #D4AF37; }
+.history-date { font-size: 13px; font-weight: 600; color: #D4AF37; margin-bottom: 6px; }
+.history-summary { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.history-pill { background: #1e1e2a; border-radius: 8px; padding: 2px 8px; font-size: 11px; color: #9a8fa0; }
+
+/* Stats */
+.stat-card { background: #13121a; border: 1px solid #1e1e24; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.stat-card-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #D4AF37; margin-bottom: 12px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+
+/* About */
+.about-logo { display: flex; align-items: center; justify-content: center; padding: 24px 0 16px; }
+.about-logo img { height: 80px; filter: drop-shadow(0 0 12px rgba(212,175,55,0.7)) drop-shadow(0 0 28px rgba(212,175,55,0.4)); }
+.about-card { background: #13121a; border: 1px solid #1e1e24; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+.about-card-title { font-size: 13px; font-weight: 600; color: #D4AF37; margin-bottom: 8px; }
+.about-card-text { font-size: 13px; color: #9a8fa0; line-height: 1.65; }
+
+/* Modal */
+.modal {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: #0d0d0f; z-index: 200; overflow-y: auto; padding: 20px 16px 100px;
+  max-width: 480px; margin: 0 auto;
+}
+.modal.active { display: block; }
+.modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.back-btn { background: none; border: none; color: #D4AF37; font-size: 22px; cursor: pointer; padding: 4px 8px 4px 0; line-height: 1; }
+.modal-date { font-size: 15px; font-weight: 600; color: #e8e0d0; }
+.detail-row { margin-bottom: 16px; }
+.detail-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #D4AF37; margin-bottom: 4px; }
+.detail-value { font-size: 14px; color: #e8e0d0; line-height: 1.5; }
+.detail-empty { color: #3a3448; font-style: italic; }
+
+.empty-state { text-align: center; color: #3a3448; padding: 40px 20px; font-size: 14px; line-height: 1.8; }
+
+svg text { font-family: -apple-system, sans-serif; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img class="header-logo" src="data:image/png;base64,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" alt="bfh">
+    <h1>Pain Journal</h1>
+  </div>
+  <div id="today-date"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('today',this)">Today</button>
+  <button class="tab-btn" onclick="showTab('history',this)">History</button>
+  <button class="tab-btn" onclick="showTab('stats',this)">Stats</button>
+  <button class="tab-btn" onclick="showTab('about',this)">About</button>
+</div>
+
+<!-- TODAY -->
+<div id="panel-today" class="panel active">
+
+  <div class="section">
+    <div class="section-title">Pain Levels</div>
+    <span class="input-label">Morning</span>
+    <div class="pain-picker" id="pain-am-picker"></div>
+    <div class="pain-label"><span>None</span><span>Severe</span></div>
+    <div style="height:12px"></div>
+    <span class="input-label">Evening</span>
+    <div class="pain-picker" id="pain-pm-picker"></div>
+    <div class="pain-label"><span>None</span><span>Severe</span></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Overall Mood</div>
+    <div class="mood-row">
+      <button class="mood-btn" data-mood="great" onclick="selectMood('great')"><span class="mood-emoji">😊</span>Good</button>
+      <button class="mood-btn" data-mood="ok" onclick="selectMood('ok')"><span class="mood-emoji">😐</span>OK</button>
+      <button class="mood-btn" data-mood="low" onclick="selectMood('low')"><span class="mood-emoji">😔</span>Low</button>
+      <button class="mood-btn" data-mood="anxious" onclick="selectMood('anxious')"><span class="mood-emoji">😰</span>Anxious</button>
+      <button class="mood-btn" data-mood="exhausted" onclick="selectMood('exhausted')"><span class="mood-emoji">😩</span>Exhausted</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Energy Level — Spoons</div>
+    <div class="spoons-row" id="spoons-row"></div>
+    <div class="spoons-label" id="spoons-label">Tap boxes to show energy used today</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Sleep</div>
+    <span class="input-label">Duration</span>
+    <input type="text" class="short-input" id="sleep-duration" placeholder="e.g. 6 hours, broken sleep" maxlength="100" oninput="autoSave()">
+    <div style="height:10px"></div>
+    <span class="input-label">Quality</span>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="star-btn" data-star="1" onclick="selectSleepQuality(1)">⭐</button>
+      <button class="star-btn" data-star="2" onclick="selectSleepQuality(2)">⭐</button>
+      <button class="star-btn" data-star="3" onclick="selectSleepQuality(3)">⭐</button>
+      <button class="star-btn" data-star="4" onclick="selectSleepQuality(4)">⭐</button>
+      <button class="star-btn" data-star="5" onclick="selectSleepQuality(5)">⭐</button>
+      <span id="sleep-quality-label" style="font-size:12px;color:#6b6478;margin-left:6px"></span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Pain — Quality &amp; Location</div>
+    <span class="input-label">Describe the sensation</span>
+    <textarea id="pain-quality" placeholder="e.g. burning, dull ache, stabbing..." oninput="autoSave()"></textarea>
+    <div style="height:8px"></div>
+    <span class="input-label">Location</span>
+    <textarea id="pain-location" placeholder="e.g. lower back, left hip..." style="min-height:50px" oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Stressors &amp; Triggers</div>
+    <textarea id="triggers" placeholder="What aggravated your pain today?" oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Coping Mechanisms</div>
+    <textarea id="coping" placeholder="What helped? How did you self-soothe?" oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Self-Care</div>
+    <textarea id="self-care" placeholder="Even a small moment counts — what brought you joy or rest?" oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Food &amp; Drink</div>
+    <textarea id="food" placeholder="Appetite, hydration, any reactions or cravings..." oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Medications</div>
+    <textarea id="medications" placeholder="What did you take? Any changes?" oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Changes &amp; Glimmers</div>
+    <textarea id="glimmers" placeholder="What's different, better, or worse? Any tiny positive moments?" oninput="autoSave()"></textarea>
+  </div>
+
+</div>
+
+<!-- HISTORY -->
+<div id="panel-history" class="panel">
+  <div id="history-list"></div>
+</div>
+
+<!-- STATS -->
+<div id="panel-stats" class="panel">
+  <div id="stats-content"></div>
+</div>
+
+<!-- ABOUT -->
+<div id="panel-about" class="panel">
+  <div class="about-logo">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA5ZDbSAAAb30lEQVR4nO19CXxU1b3/75x77yyZLAQSAgiKaBESV0B9+gQmaG21KuJzorbqQ0ultS7lWe2z7XuTsRa1Pvp/SKvi1lalSqbCs1iUumQA2YMimAAhQBJCQjLZZr3rOef/OXdmFGVJBmWyeL+fTz6ZuXfOzLn3d3777/wugAULFixYsGDBggULFixYsGDBggULFixYsGDBggULFixYsGDBggULFr5JYF4v7us5WDgJYIwhBoBSr/t6Pha+RjBWISReYagNeH/3ztM3XcPfVVR4ksctfF3IqHhkjGFW4REQKiOMsVzS8sJfXPKOBw0lYhLWA30PBoBM6cK82Ov1YsYSUsZCGmDs4+91by/f3fTmlWzzHyYa7700+1rzeB9yMGNeXFk5XTzaOX58oBL6qBf0dSOpY0WADReRQ7vv71z3rKe9bgtohqHaHVl2pCt9dvMYY8jvL8MI+QgAUC5llPrHTw02Hhw+JCcnmnPB/DqEkMY/6/UC9vmAwgCCmCHiCpv9//GExNruHi412zta2wi2u5AoIlFWCRDBdrKncUyuRQhxghHGtl1w4MOl922uuHMKMaBdjsuHspydoqvultOCH8xet697xKMX3/B4B78ehLh9ODBw0nWweTMQIg37Yr6qtTsm1jXIr+YMKRAw4j9OwOmUIMueEUHyBXBORcjHOTaXdVY8s/2NBR/t+qRu1N690pxLf/DSjMt/9Potl9z6V0/tLu0HXW1NM06BDVvWv/zDMzHi6vmLrl1CV1cIljeQuLFinf879Xv/ejHb99rFWu2SS1jgz3del0kdzFiCQIzFxxgtL2zd+fpM9pf/vuq/kl5b4jNewFWLJ0v8dcv7d5fIq69hgf+dvM7rZZiL6uS1oL60G/qdFV1VNVlCCBnZhaPW5A/LByxgijEGoqoZmwNLchljnw6FzopVB9YvnbRpe2TJvz/6wW8qvUxMuWrIB3TyXb+gnDtHzJidpztHUZeoXnrJiDlTuB6uqlrMr4WhMj9hbPOYuvd+OXvNXx8+l4/lY6CfIKMTmRy5hnE3xJ438qA9KxuwIADjsjqjPOA3RTNp37m4c/tbEzdXHWya+dv37/FSFQfAS8vK/NzYSqKa+Xw+Gqt9v5xGm4FSBoJARnIJMGXKXJ0xVqA3vvD09mXPb25uVU6JytktnLjl5b5+o6MzrvwQAAthiSEsAAIEAqKQlWXPyG8zVpHwwcOBWWrTqhs/2biF0bwpf85HqLvSO10s9fmMwz/vL/OZ3N7wyeb9pLMZt8QK9o6dPGMDQrdTxnZcqO1d+FrVB++fvvdg3tTbfc+vT43z+aDfoG9ECTYAsADArWdsA0IyJaI93KiSYsFt85s/XcfCqksdNW76S1yqBMB9hPvj8SdcopKyW+7utl92xZip86ad/6+3tzGmfMuor1z1yTtLzth9IPvq232vrq/wevrGFegBYp/QV7SBIEqABREYUcHIgIxmlV6R6381uOwmHDswob3lABiocOP0snn7E/6tjx5N2iRelZFpd8D7AE8BY41OcqhiSXTPqvzGDvHvd/6mYtXiuyZLZT6/6Sv3N2SWg93JHxVcAEgEBhRE0QZiJtaZO8GNeuTQ3O7mWqZqAhCcsxqAIDdM7/E+1K6819QjasuHDwmd6y/csaOeZY+a8gwDgsaPzO43OrdvCRxI/KNUB8Y0wKIECJueSAYCGj7Kut8/g8TaL+o81MxUwwaia/QWfjpYMpz1ZHmPv3qRyljjUFA67mvfX0OjRl7QfslTH3Iud5cHDjPM+hf6hIMpM0wRLUgiYFEAwS5k5Dr1aP13JaPNJssKRDWbbi+6eCc/Xl1d3AMHlpsT1Fs/8EjK3qGyrOMsV9620rPFKPeX+3Nkq4/8NQxIEAAwAsTdpJOug0tMAmhyxww50satd0yxveV73//JAX7c5zu+W+P315jn9WjbLLmrhQFIoBmwC4BAoBfivS/RJ5PjNEUCNo0s7gv3hFRhwAmB8WipmZ60ESU2ORYKgxlcYWg3QqKejEqx44ln7hsztjPHUNRJSizOiQtxYm+CAYC+ITCWAAl280bzO0sMcpTUnTcVVUJJaxYx5hEY++x4r8DAay6O8MGVYw1dPUWR40QQMNgkYQfnQHeP96DcHK8dqjkNGXIBo4xgyQY2m9AGAwB95CY5AOkJpjSDHakT4/J5nJdxg4ir6sRBAQRJAqKrDKHPo0xmftbvwTxUeLzfCgRMAlJRq52ASFhkDKmKCoJCshoSn5gOAKuP8w0l5kR1JXSqQ9CQghC12yVwOLJgIKBPCGwYGjBGgHMSFjGAXTDLddCU53R+nnX99YKmfXtmxWLhiyUhaxw1onlZLiGUP7xolzMvb028I7YGoXmbALjo5HFfH0Po6GLWnTTsELIXU10FXTOAUAw2V1Gjeb4HCxoC1SaBBdJRJCAdEBIYAxWEXqiWbyyBKYmYRhaSXIBIIj7A9Vy44ZWpwYY9v9i+bsNpkVB0ezQqbxKxfU0k0u3MceoT8obsvbJ4Yv41Yk4RxGr/c208aixAyPcmH89TeOgowYpA0jWTu5sn6NEQEIMKXTHCxMLC/eYJTw8WdHKBEJY1DIgOwCgTbc4Mx88HGIFFQQQQJABRBEplsOeeFm/Y9Liv7qMNZbEIe6xiy7VLFy26+oj45R+83uxgy4d3FBQ0zD/n/DFT83OHTw1V3bt03wH8YzTL153ydw8fEwgk3jMG45W4DIaui4pCu0lOsWlBc+4/7mSTC0RX2sEJPNkggaEpANAvI5P9g8C2rCIAqgIhIcGeW0AKlciz++s6Gze97Zry4KsLYgDPAA/+Hz4mAKvhHp8vCgCLlv+/mWtt1W0rTjk1NmrYsKE3jR4lFG98Y87VCPmaDudkZlrQZhmOPbjl52NU1QBD1QAobvF45nQD/Mi04HoDiRuEDAEFBgZBEAuHYSCgTwgMPHpFADAziBHrtNftag6VzvnbFQCIcuu5tNRHSn2rv5DZSRHMX14szZr35rZVf7j62iH5ZK0gKZID6ecU2eMra1cuvAyuuj/Kyk3CMijnFrSPQfPLRYYsF6qaxgxCUUwVGhESqMcDgt/PZ9KbOTsBdABDU0ESRXDlOmAgoE8IrMTbIBtkrs4gHlNAF0f4OHFZ5XQRlX4xZXc4EoZUjcaq7pLQlOe27Xz7rgcLsP5MOKQphQXOc2r3VS5GCG5JuFF+4i+pMfkzEmo/3S4iO9F1zSDUZnPkNHIjvbi49/61bkTAwTQQJTvoxABCjlwX5gL0V2BPYTVK6W5TxLuBfll1DG4OBk5DarpIoiiCTYgkghnBHizaJLi1bZbKfHfx4ubK2XflZDsvCEcUtWAIuXnT67f9+eKyV1ZxInsKi00CEiX2LUQUMAxCGcNgc+QnLGiYDr7jukifA2N+q/j0KDAK8GX6pnLNPPN0tPGmtV/OK0UyS+i+MbJEF4DeAVSXgRk6iEK+mZpLK6Bb2GZWNza+O/t/BISWUIqQ3SYyEg/+JwD7p6caMXAnghy6ro6nchSIYYBBAZiUlbCg04FJFgyUEmCUfmZE54w6CwGsNqNlos0BurprEpCaYlBCIyEaN7R4uJkK+VUIzd7LP380Q3DwcbBhAyAYGCHAGAVVO4FUqptncBCQgukrI9FNHQJSh8XjOnWIxvQ1L945Ef0Qati1LSYdNEU+U5c1UBRViMkEHMPz6vnxnrJIXwQ150ppgjYYMw6+yHRuU3Tv+eNP2xrqHqx957enObEB+dkATgcDLDpBh2wl/vF9bzUH4ZcI+fZkksh94wdrUQZMNbmCpce3n4Fzr7kN5oI7uts2PLTW5oher8qilufCjvaW9usBoOa5rVvNWJka7Rob6ewEXaeiTmxaduEFZhy5sLrYrIoMFBYjrjIDXGEGkoT3+wE8HqivrxcrK6cDj8mYP8wtaUr51M2iO8bqhjesf/Vv+z+uKjp44NDzHc2dHwpZTpbrsk90COHvjxttn5adbbcPHeq8cZjT4a77x11XIeSryhSRM0vglE9pdDoJiQI1A9EE7CcaFUroWMSAbRQl2/Vcq/NaazDCF/HTc+du1dtrX8ltr145OhaTgRKCVEPqHDX9p50A98CXa7COACeyae8DGAc8IdzRnNj8QDSIdkWivKZ621s/29LdHn219I6XfvWlnMUaAHHx5pdm/txpCz/Z0a4r2blGgY2Glu199xfnlJf7Ikk3jg2+WDQSKA8FUa4TzZJZ8lXWC8M2qcZQEBhqTECUgoT10akdCFr00GhGcYGu6gQoEzTd+GRiIYrwsiGiHxgBbSvP6DxYPzEaDp+lKcYIoikunRjZumFkiSKOMWSPY6QFm/fvLbHJHaApqijLKuQOP8Ne884Dy9tb5YXfnvPi73lemKcOU2K/sLoNuUtWM1T2xv/UvvFvJWPyhdmhsKwMdZEx+w7tfsjng1+5gfv6R7qDA57AiCGVs68hR0FTFdOmPhG4k2U4YOgtsWgUCGGY6AaoOs3h18ZYBW1at32sGm1H7R1ddMjQocIZ409xNrz37eeCrYe+u/7FH4/hHC9rRiQukwYsOJtEEfaqhtAhh7qCrpwsA0k5wzHWJD3afUZRjgqabghC1hAyvij/yZ01TVu/PefV3/OCO+Tz618mVmKHog8PPXPaf8WC627GGGy6ITIB9Juqqlj55CmIf55LITa4jCwSR0SPm2azmZvlCdavAF0V45rOQNcZ0hUd5HgiVYVQGan23zaCJzbGnHUewlhgsXBo2sdbPr44rsA7MUV4THQ4KlfC7/b5fWcf19KTq70/Rt07Z7S0qETEhniwpmpYlzblHl4H7SkHA3xHEsksE+KRtfPubwp+cOtml5NMi0TiVEDktOjuh8YigD18fE8FBwOPwJQTFHNtBhoX0V/KB6eN7BFAw02gxWPAgLtdYlSQHDpreuHmA7u3P9DSdYDJchBUWUFt6im+08v+vuCyiULks4wkvGXuHCypAVRYPB19Hp8AGDt2rFhfX2/EI7FcJ5NAxHaqxaKoOYgDNz785D6vl2AeDj3m3NwBzHzAwq6CTwW1cRojimHDYENycAwA7ClJBmMGWbqQC2kVdEU2fVNyIm7SYdBDrVmMKAAIMyWmQm5BkXRowy/X1axZfmlXVwiyXLmMUCR0tMdZ0ajTl1w2EUW8nmIbFBdSADflOxE+J9LngQ9ev84q3XD6HX8xur53CeU7GyjVGWEIbI68AK+o5HrXB6uPaw1zHz/M5FagOlCDMowwAI1k5N5nmMAJs0iOhCWqx0HTuR+MwZZ1gpkZf2L1U7l1uAgUKALUEozRcbnRs6s3rWONh/T5Z08o+vdoe+Mphw42Q1vY2THphllBxhbyoiE9YcGu7tVOBENXABsKaLrCKxZAcLoOcsJV9jiSy4HVAMipMSQBowajVABqLxqWMsZgsJXsUMPgO+YBCTbTD9Z4hudEUJi4ORgL47mxpMpxQ7I5cGtsWKAr59oJt//mg0e1WGRYZ0cHczoEyM5xNIw93x3ivkm67oluECCED8JgEAqEOdMabxCGuLTSVC61dBDMrR0nH31jRSOJb+MCquug8goLdILX6k64JJThC1RZASUWF6SsoqaL7l12XSFCkT3D691ZWQ6HJEk6UCZl5+XUIYSZ1wuiz5ee8W5QAQiPQRsENI2AoYZ5UrjX0FUFQOHxcAaEGUAgflLdoz7lYMaIaugqaJpucoTNln59ExcAvEZr//5KB0Uwo7u7m7u5gi4WPsOJa27hRMa37CKvwUZE5HVdtuF7+UieZEgbZrlPouSHL0rUa+c9oZaoFgJCiZlLNu2OaJc6aAlsxEOm/0t40B4xIOQEFjOrMDvg5IY+cjsEZXRXe5CGjfy2MdMefo5nksy9Rka0hOgyZGfZEGUiGChr62EBkl4i9WnVDFFqqp4o+5UkZ+/GJ/OGogsYxWDoBMmyAUo0GEk/Ht7PCZy6VUTMyecGB8KIcd1GgaY/j0C1GebT1bb7Wht3Uwo5uOBM98+mTJnSXpysmBIEYTzX9RRLUkzD+qgRp32SGHzkTsKeCEQFl+nNGRSBolLTkEhnuoYhgqrpoKsaQwiDmD0qb9AZWakcOGVqlBCDKXEdawamjCCZh/p6+z28NpoXBrCg/3K568CVjfWtGA87f0Hp9x9/jZf6nF3m1xhjvA/IGQajYGgaZth20H3bY2ap7COPpBPkTyxLXdVAVbnNQADzQlBnji2d8ZoSMscTHoBHGHB2QdagFdEio7SpJYYOdjI9z6ljBxw6l7dMqIZqXpN63BXNWKWIkM9gjA3r2F/1bMuuakEYev6frrr71Z9XeIjgLk9wZ+eWR0cRI3aqrirULvKQmXM3QoK5kyGdBFZK6vCYuaETELhvRHk4VEsrE0TNXDJf3Nwi5y++YviuX4ro5N1qbj7gOhS27bONuebSlk68Ow+3/e6TCs+NZ5fVaFzsci7kaTwey+V/XKfyZmRenqdApZy4Q5rXP7SybuvGMzvQhKdmPrjyTs+NhuCpYDTlGytax0SJxR2IMV3iuxiFnM38Nvdmq+jRwCWyIHA3iYKiUCBpbmrmFSFch8sqRdG4AkrH3o5M6OA+cZMI5OZKTtdLM3/02PY3nn5yWkfUv2io0Ojf/srlT5xz66xHEbqHV08eCUGC8K4F19e8ddezDbvrxLhwys03zlu61AsEl1cwauZnKxNVHCJynCvaRLPAPqpQsLtyN36VG8o5UEAINJ3yhAMwEo6mNV5XTPdK56X9XAqg9HT4gCBwsCZxc1XbafWOvCGvc1fm3+5+sA1AuOn/Flz3em6888HNL71Zte21G94TnPbNNmd+vc02RNOINlLT9fPkcPS7H61ePzrUFXt26MRHFl59zdSuCg8IZX4gvmT9a0qkYputhItDQ1elrrhkFJx32U6Ail5sFT06CFWBaToQQnl7EbAJib4TPS2Y1HxkReY1YUCoYXY4kHILXTDYCFzmT+wjuuKHz5en9tRynVteTtD1DyxfDoCXv/m/t57rkGOXYxT/F4cLX4lRBGQiOHSd1hsazP9n7SOrFi0arwKsgAqPR0h9Zwqlbh/fSYiC6+edL0e7eYkrFiRXreu6e5sA7kMnnLkhvK6AcQOL2UQJFMeItEKNyJaLsdAKhsG9dQGQOHxIOuMHWCTr8w3TyZAhM6sgPX6K0MvbAYD/HQMvQ0UFCB6PKZK/QNzP2gyGVxQYanicqsSZwyEhSc7ZNAUhvdILYmmaEazPYHPYmCZyZWq6SbocTysFJiCxWzaA6ZQhO6agkxgZxGWzRyLVn4qLbTcE8JfFH1/p/H1iEfAo0lEWvr+MjyNy6/7xDhHnRijTo1Eixahjde92Eh6JnNoo4lJm1wo8XKV6cvMag1hns5Co4jg+3MlSYF1TdqmqjiRRQBgM0Lsbec8P9I0hcAo8AuX7PFGbHpJ10EgQSnj7S1WJ4dYQNuwjLlwLsBwSrZJ6T2AzWT/Xp8NcgLqVwtTWrhDl9dB2CZiOopegX8OfPJ7V5gI4ZvLC4zevBeWc/1G8oa5bEHCOZlBQaOxCAPgTnGT06/YDJwpDDl9KlG5e5ipQZNtx3ZyHeU0y179pLRxepM57a4Z2LihXu5smhzo7ebWsQ1N1ZCPdszf8sfSGZcsEcrzMFD/H1c+51zzcxVDWc3ZRFDSVGiKJzfR6F2eV+laTk9mPenAROGlgGWr3pHgsYu4EtGcPX8/1cqV3eu+7Apgd3xkK/Pknt29ces97a/8Z+MWGLfva2mPZDe0xoSEo5wQ7lDy5Law/v/b5Wa/84+lbZ/D41LF6VHK1wgMsuadfX94awmsYJSLWw6MutL+4EEBgpaWrjZNVXdnvRPSJwhSnyEfjB1ecSnX9LFVVWEjm2/HHvNurjd5HMQKXzb/tH2peYSUtmBs9/5pLqUPOl/lxRdnnzBpRIO7eso80bZuPoVDVzDYTx7DQOfHM/Dd6QF718pNXR+pX/NGItf3AoXXM+b/ykomFI8f+Qcs9faP7loUNiTTZ10fsQdPfOLU3SDm45HrUVrW8bmsA9rRIwTNnbRp39tkomoka5J7nmJqDAO/7vSXBXR9eBEb8PEfOMEFwjX7j2p/8MZAswhtQXeUzAp6A4P/VugW/j6y5hVU9dRb9+/zLX+NaiAdDTvBrkw/oSPwlGeILx9LtAGSK8gyqxkEjogES+jf88UPuaHszMORAeMjYZdwgT1RKpuceJcEd6yMOHu1Yb5HsGGR2jQ8k3UEObuFbnNtTB/fut8aFNt+vVj9XzFbMv6hlY217buL84FFF30wrOtEqCSmh9ivsSLF1hwkoMMz/L+MLwl7vdLGvde83lsCcs3jLhkRKEITUsxDSRmILC2Ny+8yupp0s2AVGwbjLnuOnytOq3rDwteHrEpupJ6Cw9pWjQ1vuj+54poQt/+2MjbzRuPdEF8wgAu5Ld4F3nO3eufDeWP2T/2zfcNPywBMTv5X2Qy3cyU6ycssNNNLs2nNAYc7RFz0KVIOSEs83Vvf2GVLPBeSt9T99Z957gRfL2qtfn8Ka3jiT+X2Tzdgsz/qk930Mx6p922r/NIlWlF+2njcbt7g3gYzfhORj5OiOf/zsyabGLtH99NKRTfvDt+1tHrnWPuKSCv4ZN3hp74MbiEHHiivU4J5z99SHUf4Zpb8FZljc25d6N/zRw4WVL97+0YIFjYfVFqff+T31UKrYp7+u3PniJFbx+LV/51EiXgjwdc57ICOzHOz3mL/XsLdpqizLWx944FTZLLDjlY6gHzNYf0zu5X2clfeuCh/cPb16b7yt8OK77+P1WdXFJ1aWMxiR0UhWIFmeQgAPtwl6vZmxKXebTxkzP9DLcprkE0P5f2d0269+v69mH8Ij3Q+Vll5VbzZmKTOfJGoh0xycqtBAhtIAjAw74WcdbJ0r8goQrWHRo007NkxoUUY9f8N9L/6FS4Oe+kdbyIAO3rXkloLA099+28uYWfOcznd8WuE1dxSw+Kqb979Zxl7+1dQ3uRXNEwpfqfW/ha8HKYJ++Ox3nqxcdOXP+OtPKzy2noiTinaZr6MrvrNr2e3sb49cvpJ3kk1leDJ0CQMKGb8pJiG9XhQorMlyStEVDIzfXTL33bf5OS5ieWKed6fy8Ebd/hoUKGxDpaVmiwSz9ZK854l7d27e/FRdXecznv9+96eJZmQD66HNmQTqy0jW24t/MFKKH3w5J9e5Zvyk8YvyL1jYfdQBWABt//NT9+/85LGOQ20TmtrFn5b9fMlSxps2JL7MIu4x0GdiLfG8QKAeDxPmTp3562FD7ZPtNrJfcg35FNmzmjSDGaJoK6IGOTcei52ra6ywK4ze3xm/df68eaXdXFyXlSWSDH11DQMBfaq3Di+jeeGJB3POHLLnMrvDOYkKjjG8GY2AsMqQo7Uj2Pnu9fOWbkrR8mg7Giz0Y/T2MelmUMQyptJCv7lZ3PjyV3jw0fbquMFNM91I24IFCxYsWLBgwYIFCxYsWLBgwYIFCxYsWLBgwYIFCxYsWLBgwYIFCxYsWLBgwYIFCxYsQL/A/wc6Xa7U09GmaAAAAABJRU5ErkJggg==" alt="Barbara Ford-Hammond">
+  </div>
+  <div class="about-card">
+    <div class="about-card-title">About This Journal</div>
+    <div class="about-card-text">
+      This pain management journal is based on the <em>Daily Pain Tracker Diary</em> created by Barbara Ford-Hammond (BFH) as part of her Pain Management Resource Pack.<br><br>
+      It helps you track your daily pain, triggers, coping mechanisms, and well-being — privately, on your own device. Nothing here is intended to replace medical help or treatment.
+    </div>
+  </div>
+  <div class="about-card">
+    <div class="about-card-title">How To Use</div>
+    <div class="about-card-text">
+      Fill in each day's entry — even partial notes are valuable. Your data saves automatically as you type.<br><br>
+      <strong style="color:#e8e0d0">History</strong> shows all past entries. <strong style="color:#e8e0d0">Stats</strong> reveals patterns over time — when pain is highest, energy trends, and mood patterns. These can be useful to share with your doctor or care team.
+    </div>
+  </div>
+  <div class="about-card">
+    <div class="about-card-title">Energy &amp; Spoons</div>
+    <div class="about-card-text">
+      The energy section uses <em>Spoon Theory</em>. Each of the 10 boxes represents 10% of your overall energy. Tap to show how much has been used today. Over time, this reveals which activities or pain levels cost the most energy.
+    </div>
+  </div>
+  <div class="about-card">
+    <div class="about-card-title">Privacy</div>
+    <div class="about-card-text">
+      All data is stored locally on your device only. Nothing is sent anywhere. To keep your data safe, avoid clearing your browser storage. If you reinstall or switch devices, your history will not transfer automatically.
+    </div>
+  </div>
+  <div class="about-card">
+    <div class="about-card-title">Pain Management Resource Pack</div>
+    <div class="about-card-text">
+      The full resource pack by Barbara Ford-Hammond also includes:<br><br>
+      🎵 Healing Colours Meditation (MP3)<br>
+      🎵 Pain Soothing Mind-Loop (MP3)<br>
+      🎵 Soothing &amp; Relaxing Music (MP3)<br>
+      📄 10 Pacing Tips (printable)
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" class="modal">
+  <div class="modal-header">
+    <button class="back-btn" onclick="closeDetail()">&#8592;</button>
+    <div class="modal-date" id="modal-date-title"></div>
+  </div>
+  <div id="modal-content"></div>
+</div>
+
+<div class="save-indicator" id="save-indicator">Saved ✓</div>
+
+<script>
+const STORAGE_KEY = 'pain-journal';
+const MOODS = {
+  great:    { emoji: '😊', label: 'Good' },
+  ok:       { emoji: '😐', label: 'OK' },
+  low:      { emoji: '😔', label: 'Low' },
+  anxious:  { emoji: '😰', label: 'Anxious' },
+  exhausted:{ emoji: '😩', label: 'Exhausted' },
+};
+const SLEEP_LABELS = ['','Poor','Fair','OK','Good','Great'];
+
+let todayKey = dateKey(new Date());
+let currentData = {};
+let saveTimer = null;
+
+function dateKey(d) { return d.toISOString().slice(0,10); }
+
+function formatDate(key) {
+  const d = new Date(key + 'T12:00:00');
+  return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function getTodayEntry() {
+  return getData()[todayKey] || {
+    painAM:null, painPM:null, mood:null, energy:null,
+    sleepDuration:'', sleepQuality:null,
+    painQuality:'', painLocation:'',
+    triggers:'', coping:'', selfCare:'',
+    food:'', medications:'', glimmers:''
+  };
+}
+
+function saveTodayEntry() {
+  const all = getData();
+  all[todayKey] = currentData;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  const ind = document.getElementById('save-indicator');
+  ind.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => ind.classList.remove('show'), 1400);
+}
+
+function autoSave() {
+  currentData.sleepDuration  = document.getElementById('sleep-duration').value;
+  currentData.painQuality    = document.getElementById('pain-quality').value;
+  currentData.painLocation   = document.getElementById('pain-location').value;
+  currentData.triggers       = document.getElementById('triggers').value;
+  currentData.coping         = document.getElementById('coping').value;
+  currentData.selfCare       = document.getElementById('self-care').value;
+  currentData.food           = document.getElementById('food').value;
+  currentData.medications    = document.getElementById('medications').value;
+  currentData.glimmers       = document.getElementById('glimmers').value;
+  saveTodayEntry();
+}
+
+function buildPainPicker(id, field) {
+  const c = document.getElementById(id);
+  for (let i = 1; i <= 10; i++) {
+    const b = document.createElement('button');
+    b.className = 'pain-btn'; b.dataset.level = i; b.textContent = i;
+    b.onclick = () => {
+      currentData[field] = (currentData[field] === i) ? null : i;
+      updatePainPicker(id, currentData[field]);
+      saveTodayEntry();
+    };
+    c.appendChild(b);
+  }
+}
+
+function updatePainPicker(id, val) {
+  document.querySelectorAll('#' + id + ' .pain-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.level) === val);
+  });
+}
+
+function selectMood(mood) {
+  currentData.mood = (currentData.mood === mood) ? null : mood;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', b.dataset.mood === currentData.mood));
+  saveTodayEntry();
+}
+
+function selectSleepQuality(star) {
+  currentData.sleepQuality = (currentData.sleepQuality === star) ? null : star;
+  document.querySelectorAll('.star-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.star) <= (currentData.sleepQuality || 0)));
+  document.getElementById('sleep-quality-label').textContent = currentData.sleepQuality ? SLEEP_LABELS[currentData.sleepQuality] : '';
+  saveTodayEntry();
+}
+
+function buildSpoons() {
+  const row = document.getElementById('spoons-row');
+  for (let i = 1; i <= 10; i++) {
+    const box = document.createElement('div');
+    box.className = 'spoon-box'; box.dataset.spoon = i;
+    box.onclick = () => {
+      currentData.energy = (currentData.energy === i) ? i - 1 : i;
+      if (currentData.energy <= 0) currentData.energy = null;
+      updateSpoons(currentData.energy);
+      saveTodayEntry();
+    };
+    row.appendChild(box);
+  }
+}
+
+function updateSpoons(used) {
+  document.querySelectorAll('.spoon-box').forEach(b => b.classList.toggle('used', parseInt(b.dataset.spoon) <= (used || 0)));
+  document.getElementById('spoons-label').textContent = used ? used + '/10 spoons used' : 'Tap boxes to show energy used today';
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'history') renderHistory();
+  if (tab === 'stats') renderStats();
+}
+
+function renderHistory() {
+  const all = getData();
+  const keys = Object.keys(all).sort().reverse();
+  const c = document.getElementById('history-list');
+  if (!keys.length) {
+    c.innerHTML = '<div class="empty-state">No entries yet.<br>Start logging today!</div>';
+    return;
+  }
+  c.innerHTML = keys.map(k => {
+    const e = all[k];
+    const pills = [];
+    if (e.painAM != null) pills.push('AM ' + e.painAM + '/10');
+    if (e.painPM != null) pills.push('PM ' + e.painPM + '/10');
+    if (e.mood && MOODS[e.mood]) pills.push(MOODS[e.mood].emoji + ' ' + MOODS[e.mood].label);
+    if (e.energy != null) pills.push('⚡ ' + e.energy + '/10');
+    if (e.sleepQuality) pills.push('💤 ' + SLEEP_LABELS[e.sleepQuality]);
+    return '<div class="history-entry" onclick="showDetail('' + k + '')">' +
+      '<div class="history-date">' + formatDate(k) + '</div>' +
+      '<div class="history-summary">' +
+      (pills.length ? pills.map(p => '<span class="history-pill">' + p + '</span>').join('') : '<span style="color:#3a3448;font-size:11px">No data recorded</span>') +
+      '</div></div>';
+  }).join('');
+}
+
+function showDetail(key) {
+  const e = getData()[key];
+  if (!e) return;
+  document.getElementById('modal-date-title').textContent = formatDate(key);
+  const rows = [
+    ['Morning Pain',       e.painAM != null ? e.painAM + '/10' : null],
+    ['Evening Pain',       e.painPM != null ? e.painPM + '/10' : null],
+    ['Mood',               e.mood && MOODS[e.mood] ? MOODS[e.mood].emoji + ' ' + MOODS[e.mood].label : null],
+    ['Energy (Spoons)',    e.energy != null ? e.energy + '/10' : null],
+    ['Sleep',              [e.sleepDuration, e.sleepQuality ? SLEEP_LABELS[e.sleepQuality] + ' quality' : null].filter(Boolean).join(' · ') || null],
+    ['Pain Quality',       e.painQuality || null],
+    ['Pain Location',      e.painLocation || null],
+    ['Stressors / Triggers', e.triggers || null],
+    ['Coping Mechanisms',  e.coping || null],
+    ['Self-Care',          e.selfCare || null],
+    ['Food & Drink',       e.food || null],
+    ['Medications',        e.medications || null],
+    ['Changes & Glimmers', e.glimmers || null],
+  ];
+  document.getElementById('modal-content').innerHTML = rows.map(([label, val]) =>
+    '<div class="detail-row">' +
+    '<div class="detail-label">' + label + '</div>' +
+    '<div class="detail-value ' + (val ? '' : 'detail-empty') + '">' + (val ? val.replace(/\n/g,'<br>') : '—') + '</div>' +
+    '</div><div class="divider"></div>'
+  ).join('');
+  document.getElementById('detail-modal').classList.add('active');
+}
+
+function closeDetail() { document.getElementById('detail-modal').classList.remove('active'); }
+
+function renderStats() {
+  const all = getData();
+  const keys = Object.keys(all).sort();
+  const c = document.getElementById('stats-content');
+  if (keys.length < 2) {
+    c.innerHTML = '<div class="empty-state">Log at least 2 days<br>to see trends and patterns.</div>';
+    return;
+  }
+
+  let totalAM=0,cAM=0,totalPM=0,cPM=0,totalE=0,cE=0,moodCounts={};
+  const recent = keys.slice(-14);
+
+  keys.forEach(k => {
+    const e = all[k];
+    if (e.painAM!=null){totalAM+=e.painAM;cAM++;}
+    if (e.painPM!=null){totalPM+=e.painPM;cPM++;}
+    if (e.energy!=null){totalE+=e.energy;cE++;}
+    if (e.mood) moodCounts[e.mood]=(moodCounts[e.mood]||0)+1;
+  });
+
+  const avgAM = cAM ? (totalAM/cAM).toFixed(1) : '—';
+  const avgPM = cPM ? (totalPM/cPM).toFixed(1) : '—';
+  const avgE  = cE  ? (totalE/cE).toFixed(1)   : '—';
+
+  // Chart
+  const W=320,H=130,pL=24,pR=10,pT=18,pB=22;
+  const cw=W-pL-pR, ch=H-pT-pB;
+  const cd = recent.map(k => ({ k, am:all[k].painAM, pm:all[k].painPM }));
+  const xp = i => pL + (cd.length>1 ? i/(cd.length-1) : 0.5)*cw;
+  const yp = v => pT + ch - ((v-1)/9)*ch;
+
+  const grid = [2,4,6,8,10].map(v =>
+    '<line x1="'+pL+'" y1="'+yp(v)+'" x2="'+(pL+cw)+'" y2="'+yp(v)+'" stroke="#1e1e24" stroke-width="1"/>'+
+    '<text x="'+(pL-4)+'" y="'+(yp(v)+4)+'" font-size="9" fill="#3a3448" text-anchor="end">'+v+'</text>'
+  ).join('');
+
+  const amPts = cd.map((d,i)=>d.am!=null?xp(i)+','+yp(d.am):null).filter(Boolean);
+  const pmPts = cd.map((d,i)=>d.pm!=null?xp(i)+','+yp(d.pm):null).filter(Boolean);
+  const amLine = amPts.length>1 ? '<polyline points="'+amPts.join(' ')+'" fill="none" stroke="#ef4444" stroke-width="2" stroke-linejoin="round"/>' : '';
+  const pmLine = pmPts.length>1 ? '<polyline points="'+pmPts.join(' ')+'" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linejoin="round"/>' : '';
+  const amDots = cd.map((d,i)=>d.am!=null?'<circle cx="'+xp(i)+'" cy="'+yp(d.am)+'" r="3" fill="#ef4444"/>':'').join('');
+  const pmDots = cd.map((d,i)=>d.pm!=null?'<circle cx="'+xp(i)+'" cy="'+yp(d.pm)+'" r="3" fill="#D4AF37"/>':'').join('');
+
+  const firstD = new Date(cd[0].k+'T12:00:00');
+  const lastD  = new Date(cd[cd.length-1].k+'T12:00:00');
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const xLabels = '<text x="'+pL+'" y="'+(H-5)+'" font-size="9" fill="#3a3448" text-anchor="start">'+fmt(firstD)+'</text>'+
+                  '<text x="'+(pL+cw)+'" y="'+(H-5)+'" font-size="9" fill="#3a3448" text-anchor="end">'+fmt(lastD)+'</text>';
+
+  const legend = '<circle cx="'+(pL+4)+'" cy="'+(pT-8)+'" r="4" fill="#ef4444"/>'+
+    '<text x="'+(pL+12)+'" y="'+(pT-4)+'" font-size="10" fill="#9a8fa0">Morning</text>'+
+    '<circle cx="'+(pL+70)+'" cy="'+(pT-8)+'" r="4" fill="#D4AF37"/>'+
+    '<text x="'+(pL+78)+'" y="'+(pT-4)+'" font-size="10" fill="#9a8fa0">Evening</text>';
+
+  const chart = '<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="overflow:visible">'+grid+xLabels+amLine+pmLine+amDots+pmDots+legend+'</svg>';
+
+  // Mood bars
+  const moodOrder = ['great','ok','low','anxious','exhausted'];
+  const maxM = Math.max(...Object.values(moodCounts),1);
+  const moodBars = moodOrder.filter(m=>moodCounts[m]).map(m => {
+    const pct = ((moodCounts[m]||0)/maxM)*100;
+    return '<div style="margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+      '<span style="font-size:16px">'+MOODS[m].emoji+'</span>'+
+      '<span style="font-size:12px;color:#9a8fa0;width:72px">'+MOODS[m].label+'</span>'+
+      '<span style="font-size:12px;color:#6b6478">'+moodCounts[m]+'×</span></div>'+
+      '<div style="background:#1e1e24;border-radius:4px;height:6px">'+
+      '<div style="background:#D4AF37;height:100%;width:'+pct+'%;border-radius:4px"></div></div></div>';
+  }).join('');
+
+  c.innerHTML =
+    '<div class="stat-card"><div class="stat-card-title">Pain Levels — Last 14 Days</div>'+chart+'</div>'+
+    '<div class="stat-card"><div class="stat-card-title">Averages — All Time</div>'+
+    '<div class="stat-row"><span style="color:#9a8fa0">Avg morning pain</span><span style="color:#ef4444;font-weight:600">'+avgAM+'/10</span></div>'+
+    '<div class="stat-row"><span style="color:#9a8fa0">Avg evening pain</span><span style="color:#D4AF37;font-weight:600">'+avgPM+'/10</span></div>'+
+    '<div class="stat-row"><span style="color:#9a8fa0">Avg energy used</span><span style="color:#e8e0d0;font-weight:600">'+avgE+'/10</span></div>'+
+    '<div class="stat-row"><span style="color:#9a8fa0">Days logged</span><span style="color:#e8e0d0;font-weight:600">'+keys.length+'</span></div>'+
+    '</div>'+
+    (Object.keys(moodCounts).length ? '<div class="stat-card"><div class="stat-card-title">Mood Patterns</div>'+moodBars+'</div>' : '');
+}
+
+function init() {
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+  buildPainPicker('pain-am-picker','painAM');
+  buildPainPicker('pain-pm-picker','painPM');
+  buildSpoons();
+
+  currentData = getTodayEntry();
+
+  document.getElementById('sleep-duration').value = currentData.sleepDuration || '';
+  document.getElementById('pain-quality').value   = currentData.painQuality || '';
+  document.getElementById('pain-location').value  = currentData.painLocation || '';
+  document.getElementById('triggers').value       = currentData.triggers || '';
+  document.getElementById('coping').value         = currentData.coping || '';
+  document.getElementById('self-care').value      = currentData.selfCare || '';
+  document.getElementById('food').value           = currentData.food || '';
+  document.getElementById('medications').value    = currentData.medications || '';
+  document.getElementById('glimmers').value       = currentData.glimmers || '';
+
+  if (currentData.painAM != null)   updatePainPicker('pain-am-picker', currentData.painAM);
+  if (currentData.painPM != null)   updatePainPicker('pain-pm-picker', currentData.painPM);
+  if (currentData.mood)             document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', b.dataset.mood === currentData.mood));
+  if (currentData.sleepQuality) {
+    document.querySelectorAll('.star-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.star) <= currentData.sleepQuality));
+    document.getElementById('sleep-quality-label').textContent = SLEEP_LABELS[currentData.sleepQuality];
+  }
+  if (currentData.energy != null)   updateSpoons(currentData.energy);
+}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/pain-sw.js');
+}
+</script>
+</body>
+</html>
