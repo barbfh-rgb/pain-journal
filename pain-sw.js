@@ -1,5 +1,5 @@
-const CACHE = 'pain-journal-v1';
-const FILES = ['/', '/index.html', '/pain-manifest.json', '/pain-icon.png'];
+const CACHE = 'pain-journal-v2';
+const FILES = ['./', './index.html', './pain-manifest.json', './pain-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
