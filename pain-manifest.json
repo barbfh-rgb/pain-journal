@@ -2,7 +2,7 @@
   "name": "Pain Journal",
   "short_name": "Pain Journal",
   "description": "Daily pain management journal by BFH",
-  "start_url": "/",
+  "start_url": "/pain-journal/",
   "display": "standalone",
   "background_color": "#0d0d0f",
   "theme_color": "#0d0d0f",
