@@ -346,6 +346,7 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 }
 .detail-value { font-size: 14px; color: #3a2e1e; line-height: 1.65; }
 .detail-empty { color: #c8b89a; font-style: italic; }
+.detail-time { color: #bf9b30; font-style: italic; font-size: 13px; }
 
 /* ── STATS ──────────────────────────────── */
 .stats-body { padding: 0 20px; }
@@ -366,6 +367,9 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   color: #3a2e1e;
 }
 .stat-val { color: #bf9b30; font-style: italic; }
+.stat-row-med { gap: 12px; align-items: baseline; }
+.stat-row-med .stat-med-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.stat-row-med .stat-val { white-space: nowrap; }
 
 /* ── ABOUT ──────────────────────────────── */
 .about-body { padding: 0 20px; }
@@ -422,6 +426,12 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 .med-check.done { background: #bf9b30; border-color: #bf9b30; }
 .med-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
 .med-row.done .med-name { color: #8b7355; }
+.med-dose {
+  color: #bf9b30;
+  font-size: 13px;
+  font-style: italic;
+  white-space: nowrap;
+}
 .med-time {
   flex: none;
   width: 82px;
@@ -447,8 +457,9 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   font-family: Georgia, serif;
   -webkit-tap-highlight-color: transparent;
 }
-.med-add { display: flex; gap: 10px; align-items: flex-end; margin-top: 16px; }
-.med-add .short-input { flex: 1; min-width: 0; }
+.med-add { margin-top: 16px; }
+.med-add-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 12px; }
+.med-add-row .short-input { flex: 1; min-width: 0; }
 .med-add-btn {
   flex: none;
   background: #bf9b30;
@@ -474,7 +485,7 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   line-height: 1.85;
   font-style: italic;
 }
-/* ─── passcode gate (casual privacy only, not real security) ─── */
+/* ─── passcode gate ─── */
 body.is-locked > *:not(.gate) { display: none; }
 .gate {
   display: none;
@@ -745,7 +756,10 @@ body.is-locked .gate { display: flex; }
         <div id="meds-list"></div>
         <form class="med-add" id="med-add-form" autocomplete="off">
           <input type="text" class="short-input" id="med-new" placeholder="Add a medication" maxlength="80" autocomplete="off">
-          <button class="med-add-btn" type="submit">Add</button>
+          <div class="med-add-row">
+            <input type="text" class="short-input" id="med-new-dose" placeholder="Dose, e.g. 10mg" maxlength="40" autocomplete="off">
+            <button class="med-add-btn" type="submit">Add</button>
+          </div>
         </form>
       </div>
     </div>
@@ -976,6 +990,8 @@ function renderHistory() {
     if (e.pain_pm) pills.push('PM: ' + e.pain_pm);
     if (e.mood && MOODS[e.mood]) pills.push(MOODS[e.mood].emoji);
     if (e.sleepQuality) pills.push('⭐'.repeat(e.sleepQuality));
+    const medCount = takenMedsFor(e).length;
+    if (medCount) pills.push('💊 ' + medCount);
     return `<div class="history-entry" onclick="showDetail('${k}')">
       <div class="history-date">${formatDate(k)}</div>
       <div class="history-summary">${pills.map(p => `<span class="history-pill">${p}</span>`).join('')}</div>
@@ -988,6 +1004,10 @@ function showDetail(key) {
   const all = getAllData();
   const e = all[key] || {};
   document.getElementById('modal-date-label').textContent = formatDate(key);
+  const medsTaken = takenMedsFor(e);
+  const medsTakenVal = medsTaken.length
+    ? medsTaken.map(m => escapeHtml(m.label) + (m.time ? ' <span class="detail-time">' + escapeHtml(m.time) + '</span>' : '')).join('<br>')
+    : null;
   const fields = [
     ['Pain (morning)',     e.pain_am ? PAIN_FACES[e.pain_am-1] + ' ' + PAIN_LABELS[e.pain_am] : null],
     ['Pain (evening)',     e.pain_pm ? PAIN_FACES[e.pain_pm-1] + ' ' + PAIN_LABELS[e.pain_pm] : null],
@@ -1001,6 +1021,7 @@ function showDetail(key) {
     ['Coping',            e.coping],
     ['Self-care',         e.selfCare],
     ['Food & drink',      e.food],
+    ['Medications ticked', medsTakenVal],
     ['Medications',       e.medications],
     ['Changes & glimmers', e.glimmers],
   ];
@@ -1034,6 +1055,22 @@ function renderStats() {
   const topMood = Object.entries(moods).sort((a, b) => b[1] - a[1])[0];
   const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '—';
 
+  const meds = getMeds();
+  const medRows = meds.map(m => {
+    const days = entries.filter(e => e.meds && e.meds[m.id] && e.meds[m.id].taken).length;
+    return `<div class="stat-row stat-row-med">
+      <span class="stat-med-name">${escapeHtml(medLabel(m))}</span>
+      <span class="stat-val">${days} ${days === 1 ? 'day' : 'days'}</span>
+    </div>`;
+  }).join('');
+  const daysWithAnyMed = entries.filter(e => takenMedsFor(e).length).length;
+  const medsCard = meds.length ? `
+    <div class="stat-card">
+      <div class="stat-card-title">Medications</div>
+      ${medRows}
+      <div class="stat-row stat-row-med"><span class="stat-med-name">Days anything ticked</span><span class="stat-val">${daysWithAnyMed} of ${keys.length}</span></div>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="stat-card">
       <div class="stat-card-title">Pain Levels</div>
@@ -1042,6 +1079,7 @@ function renderStats() {
       <div class="stat-row"><span>Highest recorded</span><span class="stat-val">${allPain.length ? PAIN_FACES[Math.max(...allPain)-1] + ' ' + PAIN_LABELS[Math.max(...allPain)] : '—'}</span></div>
       <div class="stat-row"><span>Lowest recorded</span><span class="stat-val">${allPain.length ? PAIN_FACES[Math.min(...allPain)-1] + ' ' + PAIN_LABELS[Math.min(...allPain)] : '—'}</span></div>
     </div>
+    ${medsCard}
     <div class="stat-card">
       <div class="stat-card-title">Overview</div>
       <div class="stat-row"><span>Days journaled</span><span class="stat-val">${keys.length}</span></div>
@@ -1073,6 +1111,26 @@ function medRecord(id) {
   if (!currentData.meds[id]) currentData.meds[id] = { taken: false, time: '' };
   return currentData.meds[id];
 }
+function medLabel(m) {
+  return m.dose ? m.name + ' ' + m.dose : m.name;
+}
+// The label is copied onto the day's record when ticked, so History and Stats
+// still read correctly if the medication is later renamed or removed.
+function stampLabel(id, rec) {
+  const m = getMeds().find(x => x.id === id);
+  if (m) rec.label = medLabel(m);
+}
+function takenMedsFor(entry) {
+  const meds = (entry && entry.meds) || {};
+  const list = getMeds();
+  return Object.keys(meds).filter(id => meds[id] && meds[id].taken).map(id => {
+    const m = list.find(x => x.id === id);
+    return {
+      label: meds[id].label || (m ? medLabel(m) : 'Medication'),
+      time: meds[id].time || '',
+    };
+  });
+}
 
 function renderMeds() {
   const list = getMeds();
@@ -1084,9 +1142,10 @@ function renderMeds() {
     el.innerHTML = list.map(m => {
       const rec = taken[m.id] || {};
       const done = !!rec.taken;
+      const full = m.dose ? m.name + ' ' + m.dose : m.name;
       return `<div class="med-row${done ? ' done' : ''}">
-        <button class="med-check${done ? ' done' : ''}" type="button" role="checkbox" aria-checked="${done}" aria-label="${escapeHtml(m.name)}" onclick="toggleMed('${m.id}')">${done ? '&#10003;' : ''}</button>
-        <div class="med-name">${escapeHtml(m.name)}</div>
+        <button class="med-check${done ? ' done' : ''}" type="button" role="checkbox" aria-checked="${done}" aria-label="${escapeHtml(full)}" onclick="toggleMed('${m.id}')">${done ? '&#10003;' : ''}</button>
+        <div class="med-name">${escapeHtml(m.name)}${m.dose ? ` <span class="med-dose">${escapeHtml(m.dose)}</span>` : ''}</div>
         <input class="med-time" type="time" value="${rec.time || ''}" aria-label="Time taken" onchange="setMedTime('${m.id}', this)">
         <button class="med-del" type="button" aria-label="Remove from list" onclick="removeMed('${m.id}')">&times;</button>
       </div>`;
@@ -1105,6 +1164,7 @@ function toggleMed(id) {
   } else {
     rec.taken = true;
     rec.time = nowTime();
+    stampLabel(id, rec);
   }
   renderMeds();
   schedSave();
@@ -1113,7 +1173,7 @@ function toggleMed(id) {
 function setMedTime(id, el) {
   const rec = medRecord(id);
   rec.time = el.value;
-  if (el.value) rec.taken = true;
+  if (el.value) { rec.taken = true; stampLabel(id, rec); }
   // Update the row in place — a full re-render here would steal focus from the time picker.
   const row = el.closest('.med-row');
   const box = row.querySelector('.med-check');
@@ -1130,13 +1190,20 @@ function setMedTime(id, el) {
 function addMed(e) {
   e.preventDefault();
   const input = document.getElementById('med-new');
+  const doseInput = document.getElementById('med-new-dose');
   const name = input.value.trim();
-  if (!name) return;
+  if (!name) { input.focus(); return; }
   const list = getMeds();
-  list.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name });
+  list.push({
+    id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name,
+    dose: doseInput.value.trim(),
+  });
   saveMeds(list);
   input.value = '';
+  doseInput.value = '';
   input.blur();
+  doseInput.blur();
   renderMeds();
 }
 
@@ -1144,7 +1211,7 @@ function removeMed(id) {
   const list = getMeds();
   const med = list.find(m => m.id === id);
   if (!med) return;
-  if (!confirm('Remove ' + med.name + ' from your list?')) return;
+  if (!confirm('Remove ' + (med.dose ? med.name + ' ' + med.dose : med.name) + ' from your list?')) return;
   saveMeds(list.filter(m => m.id !== id));
   renderMeds();
 }
