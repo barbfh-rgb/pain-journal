@@ -125,6 +125,9 @@ body {
   color: #bf9b30;
   font-style: italic;
 }
+@media (max-width: 420px) {
+  .nav-btn { font-size: 10px; letter-spacing: 0.5px; }
+}
 
 /* ── PANELS ─────────────────────────────── */
 .panel { display: none; padding-bottom: 80px; }
@@ -393,6 +396,75 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 }
 .save-dot.show { opacity: 1; }
 
+/* ── MEDS ───────────────────────────────── */
+.meds-body { padding: 0 20px; }
+.meds-count { font-size: 11px; color: #8b7355; font-style: italic; margin-bottom: 10px; }
+.med-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #d4c4a0;
+}
+.med-check {
+  flex: none;
+  width: 28px; height: 28px;
+  border: 1px solid #d4c4a0;
+  border-radius: 3px;
+  background: #fffdf5;
+  color: #fdf7dc;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.med-check.done { background: #bf9b30; border-color: #bf9b30; }
+.med-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+.med-row.done .med-name { color: #8b7355; }
+.med-time {
+  flex: none;
+  width: 82px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d4c4a0;
+  color: #3a2e1e;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  padding: 3px 0;
+  text-align: center;
+}
+.med-time:focus { outline: none; border-bottom-color: #bf9b30; }
+.med-del {
+  flex: none;
+  background: none;
+  border: none;
+  color: #c8b89a;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 2px;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  -webkit-tap-highlight-color: transparent;
+}
+.med-add { display: flex; gap: 10px; align-items: flex-end; margin-top: 16px; }
+.med-add .short-input { flex: 1; min-width: 0; }
+.med-add-btn {
+  flex: none;
+  background: #bf9b30;
+  color: #fdf7dc;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 2px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  min-height: 38px;
+  -webkit-tap-highlight-color: transparent;
+}
+.med-add-btn:active { background: #a08028; }
+
 /* ── EMPTY STATE ────────────────────────── */
 .empty-state {
   text-align: center;
@@ -660,9 +732,30 @@ body.is-locked .gate { display: flex; }
     </div>
   </div>
 
+  <!-- MEDS -->
+  <div id="panel-meds" class="panel">
+    <div class="page-header">
+      <div class="page-header-sub" id="meds-date-label"></div>
+      <div class="page-header-title">Medications</div>
+    </div>
+    <div class="meds-body">
+      <div class="section">
+        <div class="section-title">Regular medications</div>
+        <div class="meds-count" id="meds-count"></div>
+        <div id="meds-list"></div>
+        <form class="med-add" id="med-add-form" autocomplete="off">
+          <input type="text" class="short-input" id="med-new" placeholder="Add a medication" maxlength="80" autocomplete="off">
+          <button class="med-add-btn" type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+    <div class="page-footer">~ ~ ~</div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav class="nav">
     <button class="nav-btn active" onclick="showTab('today',this)">Today</button>
+    <button class="nav-btn" onclick="showTab('meds',this)">Meds</button>
     <button class="nav-btn" onclick="showTab('history',this)">History</button>
     <button class="nav-btn" onclick="showTab('notes',this)">Notes</button>
     <button class="nav-btn" onclick="showTab('stats',this)">Stats</button>
@@ -725,6 +818,8 @@ function saveAllData(all) {
 function init() {
   document.getElementById('cover-date').textContent = formatDate(todayKey);
   document.getElementById('today-date-label').textContent = formatDateShort(todayKey).toUpperCase();
+  document.getElementById('meds-date-label').textContent = formatDateShort(todayKey).toUpperCase();
+  document.getElementById('med-add-form').addEventListener('submit', addMed);
   buildPainPicker('pain-am-picker', 'am');
   buildPainPicker('pain-pm-picker', 'pm');
   buildSpoons();
@@ -747,6 +842,7 @@ function showTab(tab, btn) {
   if (btn) btn.classList.add('active');
   if (tab === 'history') renderHistory();
   if (tab === 'stats') renderStats();
+  if (tab === 'meds') renderMeds();
 }
 
 // ── PAIN PICKER ───────────────────────────────
@@ -952,6 +1048,105 @@ function renderStats() {
       <div class="stat-row"><span>Most frequent mood</span><span class="stat-val">${topMood ? MOODS[topMood[0]].emoji + ' ' + MOODS[topMood[0]].label : '—'}</span></div>
     </div>
   `;
+}
+
+// ── MEDS ──────────────────────────────────────
+// The list of regular meds lives on its own and persists day to day.
+// What was taken (and when) is stored with the day's entry, in currentData.meds.
+const MEDS_KEY = 'pain-journal-meds';
+
+function getMeds() {
+  try { return JSON.parse(localStorage.getItem(MEDS_KEY) || '[]'); } catch { return []; }
+}
+function saveMeds(list) {
+  localStorage.setItem(MEDS_KEY, JSON.stringify(list));
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function nowTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+function medRecord(id) {
+  if (!currentData.meds) currentData.meds = {};
+  if (!currentData.meds[id]) currentData.meds[id] = { taken: false, time: '' };
+  return currentData.meds[id];
+}
+
+function renderMeds() {
+  const list = getMeds();
+  const taken = currentData.meds || {};
+  const el = document.getElementById('meds-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No medications listed yet.<br>Add your regular ones below ~<br>then just tick them off each day.</div>';
+  } else {
+    el.innerHTML = list.map(m => {
+      const rec = taken[m.id] || {};
+      const done = !!rec.taken;
+      return `<div class="med-row${done ? ' done' : ''}">
+        <button class="med-check${done ? ' done' : ''}" type="button" role="checkbox" aria-checked="${done}" aria-label="${escapeHtml(m.name)}" onclick="toggleMed('${m.id}')">${done ? '&#10003;' : ''}</button>
+        <div class="med-name">${escapeHtml(m.name)}</div>
+        <input class="med-time" type="time" value="${rec.time || ''}" aria-label="Time taken" onchange="setMedTime('${m.id}', this)">
+        <button class="med-del" type="button" aria-label="Remove from list" onclick="removeMed('${m.id}')">&times;</button>
+      </div>`;
+    }).join('');
+  }
+  const doneCount = list.filter(m => (taken[m.id] || {}).taken).length;
+  document.getElementById('meds-count').textContent =
+    list.length ? `${doneCount} of ${list.length} taken today` : '';
+}
+
+function toggleMed(id) {
+  const rec = medRecord(id);
+  if (rec.taken) {
+    rec.taken = false;
+    rec.time = '';
+  } else {
+    rec.taken = true;
+    rec.time = nowTime();
+  }
+  renderMeds();
+  schedSave();
+}
+
+function setMedTime(id, el) {
+  const rec = medRecord(id);
+  rec.time = el.value;
+  if (el.value) rec.taken = true;
+  // Update the row in place — a full re-render here would steal focus from the time picker.
+  const row = el.closest('.med-row');
+  const box = row.querySelector('.med-check');
+  row.classList.toggle('done', rec.taken);
+  box.classList.toggle('done', rec.taken);
+  box.innerHTML = rec.taken ? '&#10003;' : '';
+  box.setAttribute('aria-checked', rec.taken);
+  const list = getMeds();
+  const doneCount = list.filter(m => (currentData.meds[m.id] || {}).taken).length;
+  document.getElementById('meds-count').textContent = `${doneCount} of ${list.length} taken today`;
+  schedSave();
+}
+
+function addMed(e) {
+  e.preventDefault();
+  const input = document.getElementById('med-new');
+  const name = input.value.trim();
+  if (!name) return;
+  const list = getMeds();
+  list.push({ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name });
+  saveMeds(list);
+  input.value = '';
+  input.blur();
+  renderMeds();
+}
+
+function removeMed(id) {
+  const list = getMeds();
+  const med = list.find(m => m.id === id);
+  if (!med) return;
+  if (!confirm('Remove ' + med.name + ' from your list?')) return;
+  saveMeds(list.filter(m => m.id !== id));
+  renderMeds();
 }
 
 // ── NOTES ─────────────────────────────────────
