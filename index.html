@@ -386,6 +386,10 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 }
 .about-card-text { font-size: 14px; color: #3a2e1e; line-height: 1.75; }
 
+/* ── RECORDS BUTTONS ────────────────────── */
+.records-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.records-btns .cover-btn { width: 100%; padding: 13px 18px; font-size: 14px; letter-spacing: 1px; }
+
 /* ── SAVE INDICATOR ─────────────────────── */
 .save-dot {
   position: fixed;
@@ -518,6 +522,19 @@ body.is-locked .gate { display: flex; }
 }
 .gate-btn:active { background: #a08028; }
 .gate-error { margin: 0; min-height: 1.2em; color: #a04030; font-size: 0.85rem; }
+
+/* ─── print view ─── */
+#print-area { display: none; }
+@media print {
+  body { background: #fff; }
+  .book, .nav, .modal, .save-dot, .gate { display: none !important; }
+  #print-area { display: block !important; font-family: Georgia, serif; color: #000; padding: 0; }
+  #print-area h1 { font-size: 20pt; font-style: italic; margin: 0 0 2pt; }
+  #print-area h2 { font-size: 12pt; margin: 16pt 0 5pt; border-bottom: 1px solid #999; padding-bottom: 2pt; }
+  #print-area .f { margin: 0 0 3pt; font-size: 10pt; line-height: 1.45; }
+  #print-area .l { font-weight: bold; }
+  #print-area .day { page-break-inside: avoid; }
+}
 </style>
 </head>
 <body class="is-locked">
@@ -722,8 +739,20 @@ body.is-locked .gate { display: flex; }
         <div class="about-card-text">Block the boxes to show your used-up energy. Imagine each box is 10% of your overall energy. If you count spoons, there are 10 boxes that can equate to your personal spoon count.</div>
       </div>
       <div class="about-card">
+        <div class="about-card-title">Your records</div>
+        <div class="about-card-text">
+          Everything you write lives on this device only. Keep a backup so nothing is lost if you change phone or clear your browser.
+          <div class="records-btns">
+            <button class="cover-btn" type="button" onclick="exportJournal()">Save a backup</button>
+            <button class="cover-btn" type="button" onclick="document.getElementById('import-file').click()">Restore from a backup</button>
+            <button class="cover-btn" type="button" onclick="printJournal()">Print or save as PDF</button>
+          </div>
+          <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importJournal(this)">
+        </div>
+      </div>
+      <div class="about-card">
         <div class="about-card-title">Privacy</div>
-        <div class="about-card-text">All your data is saved privately on your device only. Nothing is sent anywhere.</div>
+        <div class="about-card-text">All your data is saved privately on your device only. Nothing is sent anywhere ~ so do save yourself a backup now and then.</div>
       </div>
       <div class="about-card">
         <div class="about-card-title">Created by</div>
@@ -1225,11 +1254,129 @@ function loadNotes() {
   if (el) el.value = localStorage.getItem('pain-journal-notes') || '';
 }
 
+// ── BACKUP, RESTORE, PRINT ────────────────────
+// Everything lives in this browser. These three let you keep a copy of it.
+const NOTES_KEY = 'pain-journal-notes';
+
+function collectAll() {
+  return {
+    app: 'pain-journal',
+    version: 1,
+    exported: new Date().toISOString(),
+    entries: getAllData(),
+    meds: getMeds(),
+    notes: localStorage.getItem(NOTES_KEY) || '',
+  };
+}
+
+function exportJournal() {
+  const name = 'pain-journal-' + dateKey(new Date()) + '.json';
+  const text = JSON.stringify(collectAll(), null, 2);
+  // On a phone the share sheet is friendlier than a download.
+  try {
+    const file = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Pain Journal backup' }).catch(() => {});
+      return;
+    }
+  } catch (e) { /* fall through to download */ }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function importJournal(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { alert('That file could not be read.'); input.value = ''; return; }
+    if (!data || data.app !== 'pain-journal' || !data.entries) {
+      alert('That does not look like a Pain Journal backup.');
+      input.value = '';
+      return;
+    }
+    const days = Object.keys(data.entries).length;
+    if (!confirm('Restore ' + days + (days === 1 ? ' day' : ' days') +
+                 '?\n\nAnything already saved on those dates will be replaced. Everything else is kept.')) {
+      input.value = '';
+      return;
+    }
+    // Merge rather than wipe, so restoring never loses what is already here.
+    const all = getAllData();
+    Object.keys(data.entries).forEach(k => { all[k] = data.entries[k]; });
+    saveAllData(all);
+
+    if (Array.isArray(data.meds) && data.meds.length) {
+      const existing = getMeds();
+      const ids = existing.map(m => m.id);
+      saveMeds(existing.concat(data.meds.filter(m => ids.indexOf(m.id) === -1)));
+    }
+
+    if (data.notes) {
+      const current = localStorage.getItem(NOTES_KEY) || '';
+      localStorage.setItem(NOTES_KEY,
+        current && current !== data.notes ? current + '\n\n~ ~ ~\n\n' + data.notes : data.notes);
+    }
+
+    input.value = '';
+    currentData = getAllData()[todayKey] || {};
+    renderToday();
+    loadNotes();
+    alert('Restored. ' + days + (days === 1 ? ' day is' : ' days are') + ' back in your journal.');
+  };
+  reader.readAsText(file);
+}
+
+function printJournal() {
+  const all = getAllData();
+  const keys = Object.keys(all).sort().reverse();
+  if (!keys.length) { alert('There is nothing to print yet.'); return; }
+  const rowsFor = e => [
+    ['Pain (morning)', e.pain_am ? PAIN_LABELS[e.pain_am] : ''],
+    ['Pain (evening)', e.pain_pm ? PAIN_LABELS[e.pain_pm] : ''],
+    ['Mood', e.mood && MOODS[e.mood] ? MOODS[e.mood].label : ''],
+    ['Sleep', [e.sleepDuration, e.sleepQuality ? SLEEP_LABELS[e.sleepQuality] : ''].filter(Boolean).join(' ~ ')],
+    ['Energy used', e.spoons ? (e.spoons * 10) + '%' : ''],
+    ['Pain sensation', e.painQuality],
+    ['Pain location', e.painLocation],
+    ['Triggers', e.triggers],
+    ['Coping', e.coping],
+    ['Self-care', e.selfCare],
+    ['Food & drink', e.food],
+    ['Medications ticked', takenMedsFor(e).map(m => m.label + (m.time ? ' (' + m.time + ')' : '')).join(', ')],
+    ['Medications', e.medications],
+    ['Changes & glimmers', e.glimmers],
+  ].filter(r => r[1]);
+
+  document.getElementById('print-area').innerHTML =
+    '<h1>Pain Journal</h1>' +
+    '<p class="f">Barbara Ford-Hammond ~ printed ' + formatDateShort(dateKey(new Date())) + '</p>' +
+    keys.map(k =>
+      '<div class="day"><h2>' + formatDate(k) + '</h2>' +
+      rowsFor(all[k]).map(r =>
+        '<p class="f"><span class="l">' + r[0] + ':</span> ' + escapeHtml(String(r[1])) + '</p>'
+      ).join('') +
+      '</div>'
+    ).join('');
+  window.print();
+}
+
 // ── START ─────────────────────────────────────
 init();
 loadNotes();
 </script>
 
 </div><!-- end .book -->
+
+<!-- Print view lives outside .book so it can be shown on its own -->
+<div id="print-area"></div>
+
 </body>
 </html>
