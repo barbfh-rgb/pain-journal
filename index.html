@@ -126,7 +126,7 @@ body {
   font-style: italic;
 }
 @media (max-width: 420px) {
-  .nav-btn { font-size: 10px; letter-spacing: 0.5px; }
+  .nav-btn { font-size: 10px; letter-spacing: 0.3px; }
 }
 
 /* ── PANELS ─────────────────────────────── */
@@ -480,6 +480,25 @@ textarea::placeholder, .short-input::placeholder { color: #B5AD9E; font-style: i
 }
 .med-add-btn:active { background: #957634; }
 
+/* ── DIARY ──────────────────────────────── */
+.diary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #DBC79A;
+}
+.diary-main { flex: 1; min-width: 0; }
+.diary-when { font-size: 13px; color: #B08D3F; font-style: italic; margin-bottom: 3px; }
+.diary-what { font-size: 15px; overflow-wrap: anywhere; }
+.diary-note { font-size: 12px; color: #6C6559; font-style: italic; margin-top: 3px; overflow-wrap: anywhere; }
+.diary-row.past .diary-when, .diary-row.past .diary-what { color: #6C6559; }
+.diary-add-row input[type="date"] { flex: 1.4; }
+.diary-add-row input[type="time"] { flex: 1; }
+#coming-up { display: none; }
+#coming-up.show { display: block; }
+#coming-up .diary-row:last-child { border-bottom: none; }
+
 /* ── EMPTY STATE ────────────────────────── */
 .empty-state {
   text-align: center;
@@ -592,6 +611,12 @@ body.is-locked .gate { display: flex; }
       <div class="page-header-title">Today&#8217;s Entry</div>
     </div>
     <div class="journal-body">
+
+      <div class="section" id="coming-up">
+        <div class="section-title">Coming Up</div>
+        <div id="coming-up-list"></div>
+        <div class="divider"></div>
+      </div>
 
       <div class="section">
         <div class="section-title">Pain Level - AM</div>
@@ -799,10 +824,42 @@ body.is-locked .gate { display: flex; }
     <div class="page-footer">~ ~ ~</div>
   </div>
 
+  <!-- DIARY -->
+  <div id="panel-diary" class="panel">
+    <div class="page-header">
+      <div class="page-header-sub">What is coming up</div>
+      <div class="page-header-title">Diary</div>
+    </div>
+    <div class="meds-body">
+      <div class="section">
+        <div class="section-title">Add to your diary</div>
+        <form class="med-add" id="diary-add-form" autocomplete="off" style="margin-top:0">
+          <input type="text" class="short-input" id="diary-what" placeholder="Appointment or event" maxlength="100" autocomplete="off">
+          <input type="text" class="short-input" id="diary-note" placeholder="Where, or anything to remember" maxlength="160" autocomplete="off" style="margin-top:12px">
+          <div class="med-add-row diary-add-row">
+            <input type="date" class="short-input" id="diary-date" aria-label="Date">
+            <input type="time" class="short-input" id="diary-time" aria-label="Time, if there is one">
+            <button class="med-add-btn" type="submit">Add</button>
+          </div>
+        </form>
+      </div>
+      <div class="section">
+        <div class="section-title">Coming Up</div>
+        <div id="diary-upcoming"></div>
+      </div>
+      <div class="section" id="diary-past-section" style="display:none">
+        <div class="section-title">Earlier</div>
+        <div id="diary-past"></div>
+      </div>
+    </div>
+    <div class="page-footer">~ ~ ~</div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <nav class="nav">
     <button class="nav-btn active" onclick="showTab('today',this)">Today</button>
     <button class="nav-btn" onclick="showTab('meds',this)">Meds</button>
+    <button class="nav-btn" onclick="showTab('diary',this)">Diary</button>
     <button class="nav-btn" onclick="showTab('history',this)">History</button>
     <button class="nav-btn" onclick="showTab('notes',this)">Notes</button>
     <button class="nav-btn" onclick="showTab('stats',this)">Stats</button>
@@ -867,12 +924,15 @@ function init() {
   document.getElementById('today-date-label').textContent = formatDateShort(todayKey).toUpperCase();
   document.getElementById('meds-date-label').textContent = formatDateShort(todayKey).toUpperCase();
   document.getElementById('med-add-form').addEventListener('submit', addMed);
+  document.getElementById('diary-add-form').addEventListener('submit', addDiary);
+  document.getElementById('diary-date').value = todayKey;
   buildPainPicker('pain-am-picker', 'am');
   buildPainPicker('pain-pm-picker', 'pm');
   buildSpoons();
   const all = getAllData();
   currentData = all[todayKey] || {};
   renderToday();
+  renderComingUp();
 }
 
 // ── COVER ─────────────────────────────────────
@@ -890,6 +950,8 @@ function showTab(tab, btn) {
   if (tab === 'history') renderHistory();
   if (tab === 'stats') renderStats();
   if (tab === 'meds') renderMeds();
+  if (tab === 'diary') renderDiary();
+  if (tab === 'today') renderComingUp();
 }
 
 // ── PAIN PICKER ───────────────────────────────
@@ -1249,6 +1311,84 @@ function removeMed(id) {
   renderMeds();
 }
 
+// ── DIARY ─────────────────────────────────────
+// Appointments and events, kept on their own so they show before the day arrives.
+const DIARY_KEY = 'pain-journal-diary';
+
+function getDiary() {
+  try { return JSON.parse(localStorage.getItem(DIARY_KEY) || '[]'); } catch { return []; }
+}
+function saveDiary(list) {
+  localStorage.setItem(DIARY_KEY, JSON.stringify(list));
+}
+function diarySort(a, b) {
+  return (a.date + (a.time || '99:99')).localeCompare(b.date + (b.time || '99:99'));
+}
+function diaryWhen(item) {
+  const day = item.date === todayKey ? 'Today' : formatDate(item.date);
+  return item.time ? day + ' ~ ' + item.time : day;
+}
+function diaryRow(item, past, withDelete) {
+  return `<div class="diary-row${past ? ' past' : ''}">
+    <div class="diary-main">
+      <div class="diary-when">${escapeHtml(diaryWhen(item))}</div>
+      <div class="diary-what">${escapeHtml(item.what)}</div>
+      ${item.note ? `<div class="diary-note">${escapeHtml(item.note)}</div>` : ''}
+    </div>
+    ${withDelete ? `<button class="med-del" type="button" aria-label="Remove from diary" onclick="removeDiary('${item.id}')">&times;</button>` : ''}
+  </div>`;
+}
+function renderDiary() {
+  const list = getDiary().sort(diarySort);
+  const upcoming = list.filter(i => i.date >= todayKey);
+  const past = list.filter(i => i.date < todayKey).reverse();
+  document.getElementById('diary-upcoming').innerHTML = upcoming.length
+    ? upcoming.map(i => diaryRow(i, false, true)).join('')
+    : '<div class="empty-state">Nothing in your diary yet.<br>Add appointments above ~<br>the next week shows on today&#8217;s page.</div>';
+  document.getElementById('diary-past-section').style.display = past.length ? '' : 'none';
+  document.getElementById('diary-past').innerHTML = past.map(i => diaryRow(i, true, true)).join('');
+}
+// The next seven days, shown at the top of today's page.
+function renderComingUp() {
+  const end = new Date(todayKey + 'T12:00:00');
+  end.setDate(end.getDate() + 7);
+  const endKey = dateKey(end);
+  const soon = getDiary().sort(diarySort).filter(i => i.date >= todayKey && i.date <= endKey);
+  document.getElementById('coming-up').classList.toggle('show', soon.length > 0);
+  document.getElementById('coming-up-list').innerHTML = soon.map(i => diaryRow(i, false, false)).join('');
+}
+function addDiary(e) {
+  e.preventDefault();
+  const what = document.getElementById('diary-what');
+  const note = document.getElementById('diary-note');
+  const date = document.getElementById('diary-date');
+  const time = document.getElementById('diary-time');
+  if (!what.value.trim()) { what.focus(); return; }
+  if (!date.value) { date.focus(); return; }
+  const list = getDiary();
+  list.push({
+    id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    date: date.value,
+    time: time.value || '',
+    what: what.value.trim(),
+    note: note.value.trim(),
+  });
+  saveDiary(list);
+  what.value = ''; note.value = ''; time.value = '';
+  what.blur(); note.blur();
+  renderDiary();
+  renderComingUp();
+}
+function removeDiary(id) {
+  const list = getDiary();
+  const item = list.find(i => i.id === id);
+  if (!item) return;
+  if (!confirm('Remove ' + item.what + ' from your diary?')) return;
+  saveDiary(list.filter(i => i.id !== id));
+  renderDiary();
+  renderComingUp();
+}
+
 // ── NOTES ─────────────────────────────────────
 function saveNotes() {
   localStorage.setItem('pain-journal-notes', document.getElementById('free-notes').value);
@@ -1286,6 +1426,7 @@ function collectAll() {
     exported: new Date().toISOString(),
     entries: getAllData(),
     meds: getMeds(),
+    diary: getDiary(),
     notes: localStorage.getItem(NOTES_KEY) || '',
   };
 }
@@ -1340,6 +1481,12 @@ function importJournal(input) {
       saveMeds(existing.concat(data.meds.filter(m => ids.indexOf(m.id) === -1)));
     }
 
+    if (Array.isArray(data.diary) && data.diary.length) {
+      const existing = getDiary();
+      const ids = existing.map(i => i.id);
+      saveDiary(existing.concat(data.diary.filter(i => ids.indexOf(i.id) === -1)));
+    }
+
     if (data.notes) {
       const current = localStorage.getItem(NOTES_KEY) || '';
       localStorage.setItem(NOTES_KEY,
@@ -1349,6 +1496,7 @@ function importJournal(input) {
     input.value = '';
     currentData = getAllData()[todayKey] || {};
     renderToday();
+    renderComingUp();
     loadNotes();
     alert('Restored. ' + days + (days === 1 ? ' day is' : ' days are') + ' back in your journal.');
   };
@@ -1358,7 +1506,8 @@ function importJournal(input) {
 function printJournal() {
   const all = getAllData();
   const keys = Object.keys(all).sort().reverse();
-  if (!keys.length) { alert('There is nothing to print yet.'); return; }
+  const diary = getDiary().sort(diarySort).filter(i => i.date >= todayKey);
+  if (!keys.length && !diary.length) { alert('There is nothing to print yet.'); return; }
   const rowsFor = e => [
     ['Pain (morning)', e.pain_am ? PAIN_LABELS[e.pain_am] : ''],
     ['Pain (evening)', e.pain_pm ? PAIN_LABELS[e.pain_pm] : ''],
@@ -1379,6 +1528,11 @@ function printJournal() {
   document.getElementById('print-area').innerHTML =
     '<h1>Pain Journal</h1>' +
     '<p class="f">Barbara Ford-Hammond ~ printed ' + formatDateShort(dateKey(new Date())) + '</p>' +
+    (diary.length
+      ? '<div class="day"><h2>Diary ~ coming up</h2>' + diary.map(i =>
+          '<p class="f"><span class="l">' + escapeHtml(formatDate(i.date) + (i.time ? ' ~ ' + i.time : '')) + ':</span> ' +
+          escapeHtml(i.what + (i.note ? ' (' + i.note + ')' : '')) + '</p>').join('') + '</div>'
+      : '') +
     keys.map(k =>
       '<div class="day"><h2>' + formatDate(k) + '</h2>' +
       rowsFor(all[k]).map(r =>
