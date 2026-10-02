@@ -495,6 +495,44 @@ textarea::placeholder, .short-input::placeholder { color: #B5AD9E; font-style: i
 .diary-row.past .diary-when, .diary-row.past .diary-what { color: #6C6559; }
 .diary-add-row input[type="date"] { flex: 1.4; }
 .diary-add-row input[type="time"] { flex: 1; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-title { font-size: 17px; font-style: italic; color: #4B3B5E; }
+.cal-nav {
+  background: none; border: none; color: #B08D3F; font-size: 24px; line-height: 1;
+  padding: 4px 14px; cursor: pointer; font-family: Georgia, serif;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { text-align: center; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6C6559; padding-bottom: 4px; }
+.cal-day {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: #3B3733;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-day.past { color: #B5AD9E; }
+.cal-day.today { border-color: #B08D3F; }
+.cal-day.selected { background: #F1EBDE; border-color: #DBC79A; }
+.cal-day.today.selected { border-color: #B08D3F; }
+.cal-day.has::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 5px;
+  width: 5px; height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: #B08D3F;
+}
+.cal-picked { margin-top: 10px; min-height: 20px; }
+.cal-picked-empty { font-size: 12px; color: #6C6559; font-style: italic; padding: 8px 0; }
+.cal-picked .diary-row:last-child { border-bottom: none; }
 #coming-up { display: none; }
 #coming-up.show { display: block; }
 #coming-up .diary-row:last-child { border-bottom: none; }
@@ -831,6 +869,16 @@ body.is-locked .gate { display: flex; }
       <div class="page-header-title">Diary</div>
     </div>
     <div class="meds-body">
+      <div class="section">
+        <div class="cal-head">
+          <button class="cal-nav" type="button" aria-label="Previous month" onclick="calMove(-1)">&#8249;</button>
+          <div class="cal-title" id="cal-title"></div>
+          <button class="cal-nav" type="button" aria-label="Next month" onclick="calMove(1)">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-picked" id="cal-picked"></div>
+        <div class="divider"></div>
+      </div>
       <div class="section">
         <div class="section-title">Add to your diary</div>
         <form class="med-add" id="diary-add-form" autocomplete="off" style="margin-top:0">
@@ -1338,7 +1386,52 @@ function diaryRow(item, past, withDelete) {
     ${withDelete ? `<button class="med-del" type="button" aria-label="Remove from diary" onclick="removeDiary('${item.id}')">&times;</button>` : ''}
   </div>`;
 }
+// Month view. calMonth is the first day of the month on show, calPicked the day tapped.
+let calMonth = null;
+let calPicked = null;
+function pad2(n) { return String(n).padStart(2, '0'); }
+function calMove(step) {
+  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + step, 1, 12);
+  renderCalendar();
+}
+function calPick(key) {
+  calPicked = key;
+  document.getElementById('diary-date').value = key;
+  renderCalendar();
+}
+function renderCalendar() {
+  if (!calMonth) {
+    const t = new Date(todayKey + 'T12:00:00');
+    calMonth = new Date(t.getFullYear(), t.getMonth(), 1, 12);
+  }
+  if (!calPicked) calPicked = todayKey;
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const list = getDiary().sort(diarySort);
+  const busy = {};
+  list.forEach(i => { busy[i.date] = true; });
+  document.getElementById('cal-title').textContent =
+    calMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const lead = (new Date(y, m, 1).getDay() + 6) % 7; // weeks start on Monday
+  const days = new Date(y, m + 1, 0).getDate();
+  let html = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < lead; i++) html += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const key = y + '-' + pad2(m + 1) + '-' + pad2(d);
+    const cls = ['cal-day'];
+    if (key < todayKey) cls.push('past');
+    if (key === todayKey) cls.push('today');
+    if (key === calPicked) cls.push('selected');
+    if (busy[key]) cls.push('has');
+    html += `<button type="button" class="${cls.join(' ')}" aria-label="${formatDate(key)}${busy[key] ? ', has an entry' : ''}" onclick="calPick('${key}')">${d}</button>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+  const picked = list.filter(i => i.date === calPicked);
+  document.getElementById('cal-picked').innerHTML = picked.length
+    ? picked.map(i => diaryRow(i, calPicked < todayKey, false)).join('')
+    : `<div class="cal-picked-empty">${escapeHtml(calPicked === todayKey ? 'Today' : formatDate(calPicked))} ~ nothing in the diary</div>`;
+}
 function renderDiary() {
+  renderCalendar();
   const list = getDiary().sort(diarySort);
   const upcoming = list.filter(i => i.date >= todayKey);
   const past = list.filter(i => i.date < todayKey).reverse();
@@ -1374,6 +1467,8 @@ function addDiary(e) {
     note: note.value.trim(),
   });
   saveDiary(list);
+  calPicked = date.value;
+  calMonth = new Date(Number(date.value.slice(0, 4)), Number(date.value.slice(5, 7)) - 1, 1, 12);
   what.value = ''; note.value = ''; time.value = '';
   what.blur(); note.blur();
   renderDiary();

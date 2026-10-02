@@ -1,4 +1,4 @@
-const CACHE = 'pain-journal-v4';
+const CACHE = 'pain-journal-v5';
 const FILES = ['./', './index.html', './pain-manifest.json', './pain-icon.png'];
 
 self.addEventListener('install', e => {
