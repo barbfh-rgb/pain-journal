@@ -6,7 +6,7 @@
 <title>Pain Journal — BFH</title>
 <link rel="manifest" href="pain-manifest.json">
 <link rel="apple-touch-icon" href="pain-icon.png">
-<meta name="theme-color" content="#bf9b30">
+<meta name="theme-color" content="#B08D3F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Pain Journal">
@@ -16,10 +16,10 @@
 
 /* ── BODY / BINDING ─────────────────────── */
 body {
-  background: #D57563;
+  background: #4B3B5E;
   min-height: 100vh;
   font-family: Georgia, 'Times New Roman', serif;
-  color: #3a2e1e;
+  color: #3B3733;
 }
 
 /* ── BOOK ───────────────────────────────── */
@@ -27,8 +27,8 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: #fdf7dc;
-  border-left: 10px solid #bf9b30;
+  background: #FAF6EF;
+  border-left: 10px solid #B08D3F;
   box-shadow: 6px 0 40px rgba(0,0,0,0.55), -2px 0 10px rgba(0,0,0,0.2);
   position: relative;
 }
@@ -48,37 +48,37 @@ body {
 .cover-icon {
   width: 110px; height: 110px;
   border-radius: 22px;
-  box-shadow: 0 6px 28px rgba(191,155,48,0.45);
+  box-shadow: 0 6px 28px rgba(176,141,63,0.45);
   margin-bottom: 30px;
 }
 .cover-title {
   font-size: 34px;
   font-style: italic;
-  color: #3a2e1e;
+  color: #4B3B5E;
   letter-spacing: 1px;
   margin-bottom: 6px;
 }
 .cover-by {
   font-size: 11px;
-  color: #8b7355;
+  color: #6C6559;
   letter-spacing: 3px;
   text-transform: uppercase;
   margin-bottom: 28px;
 }
 .cover-rule {
   width: 56px; height: 2px;
-  background: #bf9b30;
+  background: #B08D3F;
   margin: 0 auto 28px;
 }
 .cover-date {
   font-size: 16px;
-  color: #bf9b30;
+  color: #B08D3F;
   font-style: italic;
   margin-bottom: 48px;
 }
 .cover-btn {
-  background: #bf9b30;
-  color: #fdf7dc;
+  background: #B08D3F;
+  color: #FAF6EF;
   border: none;
   padding: 14px 36px;
   font-family: Georgia, serif;
@@ -89,7 +89,7 @@ body {
   transition: background 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
-.cover-btn:active { background: #a08028; }
+.cover-btn:active { background: #957634; }
 
 /* ── APP ────────────────────────────────── */
 #app { display: none; }
@@ -102,8 +102,8 @@ body {
   max-width: 480px;
   margin: 0 auto;
   display: flex;
-  border-top: 2px solid #bf9b30;
-  background: #fdf7dc;
+  border-top: 2px solid #B08D3F;
+  background: #FAF6EF;
   z-index: 20;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -112,7 +112,7 @@ body {
   padding: 13px 0;
   background: none;
   border: none;
-  color: #b0a070;
+  color: #6C6559;
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -122,7 +122,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .nav-btn.active {
-  color: #bf9b30;
+  color: #B08D3F;
   font-style: italic;
 }
 @media (max-width: 420px) {
@@ -136,12 +136,12 @@ body {
 /* ── PAGE HEADER ────────────────────────── */
 .page-header {
   padding: 22px 20px 14px 20px;
-  border-bottom: 1px solid #d4c4a0;
+  border-bottom: 1px solid #DBC79A;
   margin-bottom: 24px;
 }
 .page-header-sub {
   font-size: 11px;
-  color: #a09070;
+  color: #6C6559;
   letter-spacing: 2.5px;
   text-transform: uppercase;
   margin-bottom: 2px;
@@ -149,7 +149,7 @@ body {
 .page-header-title {
   font-size: 22px;
   font-style: italic;
-  color: #3a2e1e;
+  color: #4B3B5E;
 }
 
 /* ── JOURNAL BODY ───────────────────────── */
@@ -163,19 +163,19 @@ body {
   font-size: 10px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #bf9b30;
+  color: #B08D3F;
   margin-bottom: 12px;
 }
 .input-label {
   font-size: 12px;
-  color: #8b7355;
+  color: #6C6559;
   font-style: italic;
   margin-bottom: 6px;
   display: block;
 }
 .divider {
   height: 1px;
-  background: #d4c4a0;
+  background: #DBC79A;
   margin: 4px 0 24px;
 }
 
@@ -196,14 +196,14 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .pain-btn.selected {
-  border-color: #bf9b30;
-  background: #f5e8b0;
+  border-color: #B08D3F;
+  background: #F1EBDE;
 }
 .pain-label {
   display: flex;
   justify-content: space-between;
   font-size: 9px;
-  color: #a09070;
+  color: #6C6559;
   margin-top: 3px;
   font-style: italic;
 }
@@ -214,10 +214,10 @@ body {
   flex: 1;
   min-width: calc(33% - 6px);
   padding: 8px 4px;
-  border: 1px solid #d4c4a0;
+  border: 1px solid #DBC79A;
   border-radius: 3px;
-  background: #fffdf5;
-  color: #3a2e1e;
+  background: #FFFDF9;
+  color: #3B3733;
   font-size: 11px;
   cursor: pointer;
   text-align: center;
@@ -226,7 +226,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .mood-btn .mood-emoji { font-size: 18px; display: block; margin-bottom: 2px; }
-.mood-btn.selected { border-color: #bf9b30; background: #f5e8b0; color: #5a4a10; }
+.mood-btn.selected { border-color: #B08D3F; background: #F1EBDE; color: #3B3733; }
 
 /* ── STARS ──────────────────────────────── */
 .star-btn {
@@ -247,23 +247,23 @@ body {
   flex: 1;
   aspect-ratio: 1;
   max-width: 36px;
-  border: 1px solid #d4c4a0;
+  border: 1px solid #DBC79A;
   border-radius: 3px;
-  background: #fffdf5;
+  background: #FFFDF9;
   cursor: pointer;
   transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.spoon-box.used { background: #bf9b30; border-color: #bf9b30; }
-.spoons-label { font-size: 11px; color: #8b7355; font-style: italic; }
+.spoon-box.used { background: #B08D3F; border-color: #B08D3F; }
+.spoons-label { font-size: 11px; color: #6C6559; font-style: italic; }
 
 /* ── TEXTAREAS — lined paper ────────────── */
 textarea, .short-input {
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #d4c4a0;
-  color: #3a2e1e;
+  border-bottom: 1px solid #DBC79A;
+  color: #3B3733;
   font-size: 15px;
   font-family: Georgia, 'Times New Roman', serif;
   padding: 4px 0;
@@ -272,15 +272,15 @@ textarea, .short-input {
   transition: border-color 0.2s;
 }
 textarea { min-height: 84px; }
-textarea:focus, .short-input:focus { outline: none; border-bottom-color: #bf9b30; }
-textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: italic; }
+textarea:focus, .short-input:focus { outline: none; border-bottom-color: #B08D3F; }
+textarea::placeholder, .short-input::placeholder { color: #B5AD9E; font-style: italic; }
 
 /* ── PAGE FOOTER ────────────────────────── */
 .page-footer {
   text-align: center;
   padding: 28px 0 8px;
   font-size: 11px;
-  color: #d4c4a0;
+  color: #DBC79A;
   letter-spacing: 2px;
 }
 
@@ -289,15 +289,15 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 .history-entry {
   padding: 12px 14px;
   margin-bottom: 10px;
-  border-left: 3px solid #bf9b30;
-  border-bottom: 1px solid #d4c4a0;
-  background: #fffdf5;
+  border-left: 3px solid #B08D3F;
+  border-bottom: 1px solid #DBC79A;
+  background: #FFFDF9;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.history-entry:active { background: #f5e8b0; }
-.history-date { font-size: 13px; color: #bf9b30; font-style: italic; margin-bottom: 4px; }
-.history-summary { font-size: 11px; color: #8b7355; }
+.history-entry:active { background: #F1EBDE; }
+.history-date { font-size: 13px; color: #B08D3F; font-style: italic; margin-bottom: 4px; }
+.history-summary { font-size: 11px; color: #6C6559; }
 .history-pill { display: inline-block; margin-right: 8px; }
 
 /* ── DETAIL MODAL ───────────────────────── */
@@ -305,12 +305,12 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #fdf7dc;
+  background: #FAF6EF;
   z-index: 200;
   overflow-y: auto;
   max-width: 480px;
   margin: 0 auto;
-  border-left: 10px solid #bf9b30;
+  border-left: 10px solid #B08D3F;
 }
 .modal.open { display: block; }
 .modal-header {
@@ -318,45 +318,45 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 1px solid #d4c4a0;
+  border-bottom: 1px solid #DBC79A;
   position: sticky;
   top: 0;
-  background: #fdf7dc;
+  background: #FAF6EF;
   z-index: 1;
 }
 .back-btn {
   background: none;
   border: none;
-  color: #bf9b30;
+  color: #B08D3F;
   font-size: 15px;
   cursor: pointer;
   font-family: Georgia, serif;
   letter-spacing: 0.5px;
   -webkit-tap-highlight-color: transparent;
 }
-.modal-date-label { font-size: 15px; font-style: italic; color: #3a2e1e; }
+.modal-date-label { font-size: 15px; font-style: italic; color: #3B3733; }
 .modal-body { padding: 20px 20px 80px; }
 .detail-row { margin-bottom: 18px; }
 .detail-label {
   font-size: 9px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #bf9b30;
+  color: #B08D3F;
   margin-bottom: 5px;
 }
-.detail-value { font-size: 14px; color: #3a2e1e; line-height: 1.65; }
-.detail-empty { color: #c8b89a; font-style: italic; }
-.detail-time { color: #bf9b30; font-style: italic; font-size: 13px; }
+.detail-value { font-size: 14px; color: #3B3733; line-height: 1.65; }
+.detail-empty { color: #B5AD9E; font-style: italic; }
+.detail-time { color: #B08D3F; font-style: italic; font-size: 13px; }
 
 /* ── STATS ──────────────────────────────── */
 .stats-body { padding: 0 20px; }
-.stat-card { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #d4c4a0; }
+.stat-card { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #DBC79A; }
 .stat-card:last-child { border-bottom: none; }
 .stat-card-title {
   font-size: 10px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #bf9b30;
+  color: #B08D3F;
   margin-bottom: 12px;
 }
 .stat-row {
@@ -364,9 +364,9 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   justify-content: space-between;
   font-size: 13px;
   margin-bottom: 8px;
-  color: #3a2e1e;
+  color: #3B3733;
 }
-.stat-val { color: #bf9b30; font-style: italic; }
+.stat-val { color: #B08D3F; font-style: italic; }
 .stat-row-med { gap: 12px; align-items: baseline; }
 .stat-row-med .stat-med-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .stat-row-med .stat-val { white-space: nowrap; }
@@ -374,17 +374,17 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 /* ── ABOUT ──────────────────────────────── */
 .about-body { padding: 0 20px; }
 .about-logo-wrap { text-align: center; padding: 20px 0 24px; }
-.about-logo-wrap img { width: 80px; height: 80px; border-radius: 16px; box-shadow: 0 4px 16px rgba(191,155,48,0.35); }
-.about-card { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #d4c4a0; }
+.about-logo-wrap img { width: 80px; height: 80px; border-radius: 16px; box-shadow: 0 4px 16px rgba(176,141,63,0.35); }
+.about-card { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #DBC79A; }
 .about-card:last-child { border-bottom: none; }
 .about-card-title {
   font-size: 10px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: #bf9b30;
+  color: #B08D3F;
   margin-bottom: 8px;
 }
-.about-card-text { font-size: 14px; color: #3a2e1e; line-height: 1.75; }
+.about-card-text { font-size: 14px; color: #3B3733; line-height: 1.75; }
 
 /* ── RECORDS BUTTONS ────────────────────── */
 .records-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
@@ -396,7 +396,7 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   top: 14px; right: 14px;
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: #bf9b30;
+  background: #B08D3F;
   opacity: 0;
   transition: opacity 0.3s;
   z-index: 50;
@@ -406,32 +406,32 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 
 /* ── MEDS ───────────────────────────────── */
 .meds-body { padding: 0 20px; }
-.meds-count { font-size: 11px; color: #8b7355; font-style: italic; margin-bottom: 10px; }
+.meds-count { font-size: 11px; color: #6C6559; font-style: italic; margin-bottom: 10px; }
 .med-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 11px 0;
-  border-bottom: 1px solid #d4c4a0;
+  border-bottom: 1px solid #DBC79A;
 }
 .med-check {
   flex: none;
   width: 28px; height: 28px;
-  border: 1px solid #d4c4a0;
+  border: 1px solid #DBC79A;
   border-radius: 3px;
-  background: #fffdf5;
-  color: #fdf7dc;
+  background: #FFFDF9;
+  color: #FAF6EF;
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
   transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.med-check.done { background: #bf9b30; border-color: #bf9b30; }
+.med-check.done { background: #B08D3F; border-color: #B08D3F; }
 .med-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
-.med-row.done .med-name { color: #8b7355; }
+.med-row.done .med-name { color: #6C6559; }
 .med-dose {
-  color: #bf9b30;
+  color: #B08D3F;
   font-size: 13px;
   font-style: italic;
   white-space: nowrap;
@@ -441,19 +441,19 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   width: 82px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #d4c4a0;
-  color: #3a2e1e;
+  border-bottom: 1px solid #DBC79A;
+  color: #3B3733;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 13px;
   padding: 3px 0;
   text-align: center;
 }
-.med-time:focus { outline: none; border-bottom-color: #bf9b30; }
+.med-time:focus { outline: none; border-bottom-color: #B08D3F; }
 .med-del {
   flex: none;
   background: none;
   border: none;
-  color: #c8b89a;
+  color: #B5AD9E;
   font-size: 20px;
   line-height: 1;
   padding: 4px 2px;
@@ -466,8 +466,8 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
 .med-add-row .short-input { flex: 1; min-width: 0; }
 .med-add-btn {
   flex: none;
-  background: #bf9b30;
-  color: #fdf7dc;
+  background: #B08D3F;
+  color: #FAF6EF;
   border: none;
   padding: 8px 18px;
   border-radius: 2px;
@@ -478,12 +478,12 @@ textarea::placeholder, .short-input::placeholder { color: #c8b89a; font-style: i
   min-height: 38px;
   -webkit-tap-highlight-color: transparent;
 }
-.med-add-btn:active { background: #a08028; }
+.med-add-btn:active { background: #957634; }
 
 /* ── EMPTY STATE ────────────────────────── */
 .empty-state {
   text-align: center;
-  color: #c8b89a;
+  color: #B5AD9E;
   padding: 48px 20px;
   font-size: 14px;
   line-height: 1.85;
@@ -494,33 +494,33 @@ body.is-locked > *:not(.gate) { display: none; }
 .gate {
   display: none;
   position: fixed; inset: 0; z-index: 9999;
-  background: #D57563;
+  background: #4B3B5E;
   align-items: center; justify-content: center;
 }
 body.is-locked .gate { display: flex; }
 .gate-box {
   display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
   padding: 2rem 2.2rem;
-  border: 2px solid #bf9b30; border-radius: 14px;
-  background: #fdf7dc;
+  border: 2px solid #B08D3F; border-radius: 14px;
+  background: #FAF6EF;
   box-shadow: 0 18px 40px rgba(0,0,0,0.25);
   width: min(90vw, 20rem);
   font-family: Georgia, 'Times New Roman', serif;
 }
-.gate-title { font-size: 1.3rem; color: #3a2e1e; margin: 0; }
+.gate-title { font-size: 1.3rem; color: #4B3B5E; margin: 0; }
 .gate-input {
   width: 100%; padding: 0.6rem 0.8rem; border-radius: 8px;
-  border: 2px solid #bf9b30; background: #fff; color: #3a2e1e;
+  border: 2px solid #B08D3F; background: #fff; color: #3B3733;
   text-align: center; font-family: Georgia, serif; font-size: 1rem;
   outline: none;
 }
-.gate-input:focus { outline: 2px solid #bf9b30; outline-offset: 2px; }
+.gate-input:focus { outline: 2px solid #B08D3F; outline-offset: 2px; }
 .gate-btn {
   width: 100%; padding: 0.6rem 1.3rem; border: none; border-radius: 999px;
-  background: #bf9b30; color: #fdf7dc; font-family: Georgia, serif;
+  background: #B08D3F; color: #FAF6EF; font-family: Georgia, serif;
   font-size: 1rem; font-weight: bold; cursor: pointer; min-height: 44px;
 }
-.gate-btn:active { background: #a08028; }
+.gate-btn:active { background: #957634; }
 .gate-error { margin: 0; min-height: 1.2em; color: #a04030; font-size: 0.85rem; }
 
 /* ─── print view ─── */
@@ -633,7 +633,7 @@ body.is-locked .gate { display: flex; }
           <button class="star-btn" data-star="3" onclick="selectSleepQuality(3)">⭐</button>
           <button class="star-btn" data-star="4" onclick="selectSleepQuality(4)">⭐</button>
           <button class="star-btn" data-star="5" onclick="selectSleepQuality(5)">⭐</button>
-          <span id="sleep-quality-label" style="font-size:12px;color:#8b7355;margin-left:6px;font-style:italic"></span>
+          <span id="sleep-quality-label" style="font-size:12px;color:#6C6559;margin-left:6px;font-style:italic"></span>
         </div>
       </div>
       <div class="divider"></div>
@@ -768,7 +768,11 @@ body.is-locked .gate { display: flex; }
       <div class="page-header-title">Notes</div>
     </div>
     <div style="padding: 0 20px;">
-      <textarea id="free-notes" style="min-height: calc(100vh - 200px); width: 100%; background: transparent; border: none; border-bottom: 1px solid #d4c4a0; color: #3a2e1e; font-size: 16px; font-family: Georgia, serif; padding: 4px 0; line-height: 1.8; resize: none;" placeholder="" oninput="saveNotes()"></textarea>
+      <div class="med-add-row" style="margin: 0 0 14px;">
+        <input type="date" class="short-input" id="notes-date" aria-label="Date to add to your notes">
+        <button class="med-add-btn" type="button" onclick="addNoteDate()">Add date</button>
+      </div>
+      <textarea id="free-notes" style="min-height: calc(100vh - 200px); width: 100%; background: transparent; border: none; border-bottom: 1px solid #DBC79A; color: #3B3733; font-size: 16px; font-family: Georgia, serif; padding: 4px 0; line-height: 1.8; resize: none;" placeholder="" oninput="saveNotes()"></textarea>
     </div>
   </div>
 
@@ -1252,6 +1256,23 @@ function saveNotes() {
 function loadNotes() {
   const el = document.getElementById('free-notes');
   if (el) el.value = localStorage.getItem('pain-journal-notes') || '';
+  const d = document.getElementById('notes-date');
+  if (d) d.value = dateKey(new Date());
+}
+// Puts the chosen date into the notes as a heading line, wherever the cursor is.
+function addNoteDate() {
+  const el = document.getElementById('free-notes');
+  const picker = document.getElementById('notes-date');
+  const key = picker.value || dateKey(new Date());
+  const start = el.selectionStart, end = el.selectionEnd;
+  const before = el.value.slice(0, start), after = el.value.slice(end);
+  const lead = before === '' ? '' : before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+  const text = lead + formatDate(key) + '\n';
+  el.value = before + text + after;
+  const pos = before.length + text.length;
+  el.focus();
+  el.setSelectionRange(pos, pos);
+  saveNotes();
 }
 
 // ── BACKUP, RESTORE, PRINT ────────────────────
