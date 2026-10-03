@@ -387,6 +387,25 @@ textarea::placeholder, .short-input::placeholder { color: #B5AD9E; font-style: i
 .about-card-text { font-size: 14px; color: #3B3733; line-height: 1.75; }
 
 /* ── RECORDS BUTTONS ────────────────────── */
+.cover-restore { display: none; margin-top: 36px; max-width: 300px; }
+.cover-restore.show { display: block; }
+.cover-restore p { font-size: 13px; color: #6C6559; line-height: 1.6; margin-bottom: 12px; }
+.cover-restore button {
+  background: none; border: 1px solid #B08D3F; color: #957634;
+  padding: 11px 22px; font-family: Georgia, serif; font-size: 13px;
+  letter-spacing: 1px; cursor: pointer; border-radius: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.backup-nudge {
+  display: none; margin: 0 0 24px; padding: 16px 16px 14px;
+  border: 1px solid #DBC79A; border-radius: 2px; background: #F1EBDE;
+}
+.backup-nudge.show { display: block; }
+.backup-nudge p { font-size: 14px; color: #3B3733; line-height: 1.6; margin-bottom: 12px; }
+.backup-nudge-btns { display: flex; gap: 10px; }
+.backup-nudge-btns .cover-btn { flex: 1; padding: 12px 10px; font-size: 13px; letter-spacing: 1px; }
+.backup-nudge-btns .later { background: none; border: 1px solid #B08D3F; color: #957634; }
+.backup-last { margin-top: 14px; font-size: 13px; color: #6C6559; font-style: italic; }
 .records-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .records-btns .cover-btn { width: 100%; padding: 13px 18px; font-size: 14px; letter-spacing: 1px; }
 
@@ -637,6 +656,10 @@ body.is-locked .gate { display: flex; }
   <div class="cover-rule"></div>
   <div class="cover-date" id="cover-date"></div>
   <button class="cover-btn" onclick="openJournal()">Open today&#8217;s page &rarr;</button>
+  <div class="cover-restore" id="cover-restore">
+    <p>Used this journal before and it has opened empty? Bring your entries back from your backup file.</p>
+    <button type="button" onclick="document.getElementById('import-file').click()">Restore from a backup</button>
+  </div>
 </div>
 
 <!-- ─── APP ──────────────────────────────── -->
@@ -649,6 +672,14 @@ body.is-locked .gate { display: flex; }
       <div class="page-header-title">Today&#8217;s Entry</div>
     </div>
     <div class="journal-body">
+
+      <div class="backup-nudge" id="backup-nudge">
+        <p id="backup-nudge-text"></p>
+        <div class="backup-nudge-btns">
+          <button class="cover-btn" type="button" onclick="exportJournal()">Save a backup</button>
+          <button class="cover-btn later" type="button" onclick="snoozeBackup()">Later</button>
+        </div>
+      </div>
 
       <div class="section" id="coming-up">
         <div class="section-title">Coming Up</div>
@@ -804,7 +835,12 @@ body.is-locked .gate { display: flex; }
       <div class="about-card">
         <div class="about-card-title">Your records</div>
         <div class="about-card-text">
-          Everything you write lives on this device only. Keep a backup so nothing is lost if you change phone or clear your browser.
+          Everything you write lives on this device only, inside this browser. A browser can clear what it holds, so keep a backup file.<br><br>
+          <strong>Save a backup every week.</strong> Tap Save a backup and keep the file somewhere safe, such as your Files or Documents folder. The journal reminds you when one is due.<br><br>
+          <strong>If the journal opens empty.</strong> Tap Restore from a backup and choose your most recent backup file.<br><br>
+          <strong>Open it the same way each time.</strong> Use the same device and the same browser. Private or incognito windows do not keep your entries.<br><br>
+          <strong>iPhone, iPad and Safari on a Mac.</strong> Safari clears a website after seven days without a visit. To stop this, save a backup, add the journal to your Home Screen (or to the Dock on a Mac), open it from there and restore your backup.
+          <div class="backup-last" id="backup-last"></div>
           <div class="records-btns">
             <button class="cover-btn" type="button" onclick="exportJournal()">Save a backup</button>
             <button class="cover-btn" type="button" onclick="document.getElementById('import-file').click()">Restore from a backup</button>
@@ -1533,7 +1569,7 @@ function exportJournal() {
   try {
     const file = new File([text], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: 'Pain Journal backup' }).catch(() => {});
+      navigator.share({ files: [file], title: 'Pain Journal backup' }).then(markBackedUp).catch(() => {});
       return;
     }
   } catch (e) { /* fall through to download */ }
@@ -1544,6 +1580,60 @@ function exportJournal() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  markBackedUp();
+}
+
+// ── KEEPING THE JOURNAL SAFE ──────────────────
+// The browser can clear what it holds. These ask it not to, remind the
+// person to save a backup, and offer a restore when the journal opens empty.
+const LAST_BACKUP_KEY = 'pain-journal-last-backup';
+const BACKUP_SNOOZE_KEY = 'pain-journal-backup-snooze';
+const BACKUP_EVERY_DAYS = 7;
+
+function hasAnything() {
+  return Object.keys(getAllData()).length > 0 || getMeds().length > 0 ||
+         getDiary().length > 0 || !!(localStorage.getItem(NOTES_KEY) || '').trim();
+}
+function daysSince(key) {
+  const then = new Date(key + 'T12:00:00'), now = new Date(dateKey(new Date()) + 'T12:00:00');
+  return Math.round((now - then) / 86400000);
+}
+function markBackedUp() {
+  localStorage.setItem(LAST_BACKUP_KEY, dateKey(new Date()));
+  localStorage.removeItem(BACKUP_SNOOZE_KEY);
+  refreshSafety();
+}
+function snoozeBackup() {
+  localStorage.setItem(BACKUP_SNOOZE_KEY, dateKey(new Date()));
+  refreshSafety();
+}
+function askBrowserToKeep() {
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persisted().then(kept => { if (!kept) navigator.storage.persist(); }).catch(() => {});
+    }
+  } catch (e) { /* older browsers */ }
+}
+function refreshSafety() {
+  const any = hasAnything();
+  const last = localStorage.getItem(LAST_BACKUP_KEY);
+  const snoozed = localStorage.getItem(BACKUP_SNOOZE_KEY) === dateKey(new Date());
+
+  document.getElementById('cover-restore').classList.toggle('show', !any);
+
+  const lastEl = document.getElementById('backup-last');
+  if (lastEl) lastEl.textContent = last ? 'Last backup saved: ' + formatDate(last) : 'No backup saved yet.';
+
+  let text = '';
+  if (any && !snoozed) {
+    if (!last) {
+      if (Object.keys(getAllData()).length >= 2) text = 'You have not saved a backup yet. Save one now and keep the file somewhere safe.';
+    } else if (daysSince(last) >= BACKUP_EVERY_DAYS) {
+      text = 'Your last backup was ' + daysSince(last) + ' days ago. Save a new one and keep the file somewhere safe.';
+    }
+  }
+  document.getElementById('backup-nudge-text').textContent = text;
+  document.getElementById('backup-nudge').classList.toggle('show', !!text);
 }
 
 function importJournal(input) {
@@ -1593,6 +1683,8 @@ function importJournal(input) {
     renderToday();
     renderComingUp();
     loadNotes();
+    refreshSafety();
+    askBrowserToKeep();
     alert('Restored. ' + days + (days === 1 ? ' day is' : ' days are') + ' back in your journal.');
   };
   reader.readAsText(file);
@@ -1641,6 +1733,8 @@ function printJournal() {
 // ── START ─────────────────────────────────────
 init();
 loadNotes();
+refreshSafety();
+askBrowserToKeep();
 </script>
 
 </div><!-- end .book -->
